@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+openai
+anthropic
+truststore
+fpdf2
+httpx
+openpyxl
+python-docx
+pypdf

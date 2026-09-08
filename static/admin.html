@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paskyros — Užpajamavimas</title>
+<link rel="icon" href="/static/ikona-192.png">
+<style>
+  :root{--akcentas:#2563eb; --linija:#e5e7eb; --pilkas:#6b7280; --raudona:#dc2626; --zalia:#16a34a}
+  *{box-sizing:border-box; margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:#f3f4f6; color:#111827; padding:0}
+  header{display:flex; align-items:center; gap:14px; padding:10px 18px; background:#fff;
+         border-bottom:1px solid var(--linija); position:sticky; top:0}
+  header h1{font-size:16px; font-weight:700}
+  header h1 span{color:var(--akcentas)}
+  header a{color:var(--pilkas); font-size:13px; text-decoration:none; margin-left:auto}
+  header a:hover{color:var(--akcentas)}
+  main{max-width:860px; margin:24px auto; padding:0 18px}
+  .kortele{background:#fff; border:1px solid var(--linija); border-radius:12px; padding:20px; margin-bottom:18px}
+  h2{font-size:15px; margin-bottom:12px}
+  .pastaba{font-size:12.5px; color:var(--pilkas); margin-bottom:14px}
+  table{width:100%; border-collapse:collapse; font-size:13.5px}
+  th{ text-align:left; color:var(--pilkas); font-size:12px; font-weight:600; padding:6px 10px; border-bottom:1px solid var(--linija)}
+  td{padding:8px 10px; border-bottom:1px solid var(--linija)}
+  tr:last-child td{border-bottom:0}
+  .zyme{display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:99px;
+        background:#eff6ff; color:var(--akcentas)}
+  button{padding:8px 14px; border:0; border-radius:8px; background:var(--akcentas); color:#fff;
+         font-size:13px; font-weight:600; cursor:pointer}
+  button:hover{filter:brightness(1.06)}
+  button.antras{background:#fff; color:#111827; border:1px solid var(--linija)}
+  button.pavojus{background:#fff; color:var(--raudona); border:1px solid var(--linija)}
+  button:disabled{opacity:.5; cursor:default}
+  .eilute-forma{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  input[type=text]{padding:9px 12px; border:1px solid var(--linija); border-radius:8px; font-size:14px; width:220px}
+  input:focus{outline:2px solid var(--akcentas); outline-offset:-1px; border-color:transparent}
+  label.varn{font-size:13px; color:var(--pilkas); display:flex; gap:6px; align-items:center; cursor:pointer}
+  #naujas-slaptazodis{display:none; margin-top:14px; padding:14px; border:1px dashed var(--zalia);
+                      border-radius:10px; background:#f0fdf4; font-size:13.5px}
+  #naujas-slaptazodis code{font-size:16px; font-weight:700; letter-spacing:.5px; user-select:all}
+  #naujas-slaptazodis .persp{color:var(--raudona); font-size:12px; margin-top:6px}
+  #klaida{color:var(--raudona); font-size:13px; min-height:18px; margin-top:10px}
+  .maza{font-size:12px; color:var(--pilkas)}
+  td .veiksmai{display:flex; gap:6px; justify-content:flex-end}
+  td .veiksmai button{padding:5px 10px; font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙️ Paskyrų <span>valdymas</span></h1>
+  <a href="/">← grįžti į programą</a>
+</header>
+<main>
+  <div class="kortele">
+    <h2>Nauja paskyra</h2>
+    <div class="pastaba">Slaptažodis sugeneruojamas automatiškai ir parodomas <b>vieną kartą</b> — nusikopijuok ir perduok darbuotojai saugiu kanalu. Kartu sukuriamas darbuotojos sąskaitų folderis.</div>
+    <div class="eilute-forma">
+      <input type="text" id="vardas" placeholder="Vardas (pvz. Ona)" maxlength="40">
+      <label class="varn"><input type="checkbox" id="admin"> administratorius</label>
+      <label class="varn" title="Vadybininkas dirba APSKAITOS aplinkoje: mato tik SAVO folderio dar neperduotas sąskaitas, jungia eilutes, rašo pardavimo kainą ir perduoda apskaitai. XML neformuoja."><input type="checkbox" id="vadybininkas"> vadybininkas (apskaitos aplinkoje)</label>
+      <input type="text" id="vadyb-folderis" placeholder="vadybininko folderis (pvz. Vadybininkas)" maxlength="40" style="display:none">
+      <button id="kurti">Sukurti paskyrą</button>
+    </div>
+    <div id="naujas-slaptazodis"></div>
+    <div id="klaida"></div>
+  </div>
+
+  <div class="kortele">
+    <h2>Pragma — kėlimo režimas</h2>
+    <div class="pastaba">Grįžtamumo jungikliai. <b>Automatinis kėlimas</b> — XML su Pragma pasirinkimais keliasi tiesiai į Pragmą be importo lango. Vadybininko folderio XML eina į jo folderį, kurį agentas stebi. <b>Apskaitos XML folderis</b> — į kurį agento stebimą folderį eina VISŲ KITŲ (apskaitininkių) sąskaitų XML; Pragmos pusė stebi „apskaita" (nuo 09-07). Tuščias = apskaitininkių XML į savo folderius, rankinis importo langas. <b>Bandymų režimas</b> — keliama į BANDYMAI bazę, tikra neliečiama. <b>Statusas</b> — su kokiu statusu keliami pirkimai be pardavimo (su pardavimu pirkimas visada Patvirtintas). <b>Savos įmonės</b> — kurią Pragmos pardavėjo žymę siūlyti pagal sąskaitos folderį (po eilutę „folderis = Sava įmonė"); automatui ji privaloma kiekvienam failui.</div>
+    <div class="eilute-forma">
+      <label class="varn"><input type="checkbox" id="pr-auto"> automatinis kėlimas</label>
+      <label class="varn"><input type="checkbox" id="pr-bandymai"> bandymų režimas (BANDYMAI bazė)</label>
+      <label class="varn">statusas <select id="pr-statusas"><option>Nepatvirtintas</option><option>Patvirtintas</option><option>Juodraštis</option></select></label>
+      <label class="varn">apskaitos XML folderis <input id="pr-auto-folderis" placeholder="pvz. apskaita (tuščia = rankinis)" style="width:200px"></label>
+      <button id="pr-saugoti">Išsaugoti</button>
+    </div>
+    <div style="margin-top:8px"><label class="maza">savos įmonės pagal folderį (po eilutę: folderis = Sava įmonė, tiksliai kaip Pragmoje)<br>
+      <textarea id="pr-savos" rows="3" style="width:100%; max-width:520px; font:inherit; font-size:12.5px" placeholder="Vadybininkas = Pardavėjo žymė&#10;Apskaita = Įmonės žymė"></textarea></label></div>
+    <div class="maza" id="pr-busena" style="margin-top:6px"></div>
+  </div>
+
+  <div class="kortele">
+    <h2>AI išlaidos</h2>
+    <div class="pastaba" id="islaidu-pastaba">Kiek centų AI skaitymui išnaudojo kiekvienas vartotojas (pagal darbuotojo folderį, kuriame gulėjo sąskaita).</div>
+    <table>
+      <thead><tr><th>Vartotojas</th><th style="text-align:right">Šis mėnuo</th><th style="text-align:right">Viso</th></tr></thead>
+      <tbody id="islaidu-lentele"></tbody>
+    </table>
+  </div>
+
+  <div class="kortele">
+    <h2>Kas ką turi</h2>
+    <div class="pastaba">
+      Kiekvienos paskyros aplinka: projektų vadovų folderiai, jų sąskaitos, prijungtas paštas ir siuntėjų priskyrimai.
+      Tik peržiūra — paskyros duomenys lieka tik jai.
+    </div>
+    <div id="aplinku-sarasas"></div>
+  </div>
+
+  <div class="kortele">
+    <h2>Paskyros</h2>
+    <div class="pastaba" id="bendro-pastaba" style="display:none">
+      ⚠️ Kol nėra nė vienos paskyros, visi jungiasi bendru slaptažodžiu iš serverio nustatymų.
+      Sukūrus paskyrą, tas vardas jungsis TIK savo slaptažodžiu; vardai be paskyrų — toliau bendru.
+    </div>
+    <table>
+      <thead><tr><th>Vardas</th><th>Teisės</th><th>Sukurta</th><th>Paskutinis prisijungimas</th><th style="text-align:right">Veiksmai</th></tr></thead>
+      <tbody id="lentele"></tbody>
+    </table>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+
+function data(t) {
+  if (!t) return "—";
+  return new Date(t * 1000).toLocaleString("lt-LT", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+
+function rodytiSlaptazodi(vardas, slaptazodis, antraste) {
+  const b = $("#naujas-slaptazodis");
+  b.style.display = "";
+  b.innerHTML = `${antraste} <b>${vardas}</b>:<br>
+    Slaptažodis: <code>${slaptazodis}</code>
+    <button class="antras" style="margin-left:10px; padding:4px 10px; font-size:12px" id="kopijuoti">Kopijuoti</button>
+    <div class="persp">Parodomas tik dabar — uždarius puslapį jo niekas nebeatkurs (tik pakeis nauju).</div>`;
+  $("#kopijuoti").onclick = () => {
+    navigator.clipboard.writeText(slaptazodis);
+    $("#kopijuoti").textContent = "Nukopijuota ✓";
+  };
+}
+
+async function uzkrauti() {
+  $("#klaida").textContent = "";
+  try {
+    const r = await fetch("/api/admin/paskyros");
+    if (r.status === 403) { document.body.innerHTML = "<main><div class='kortele'>Reikia administratoriaus teisių. <a href='/'>Grįžti</a></div></main>"; return; }
+    const j = await r.json();
+    $("#bendro-pastaba").style.display = j.bendras_veikia ? "" : "none";
+    const tb = $("#lentele");
+    tb.innerHTML = "";
+    for (const p of j.paskyros || []) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><b>${p.vardas}</b></td>
+        <td>${p.admin ? '<span class="zyme">admin</span>' : p.vadybininkas ? '<span class="zyme">vadybininkas</span>' : '<span class="maza">darbuotoja</span>'}${p.aplinka ? ` <span class="maza">(${p.aplinka} aplinkoje)</span>` : ""}</td>
+        <td class="maza">${data(p.sukurta)}</td>
+        <td class="maza">${data(p.paskutinis)}</td>
+        <td><div class="veiksmai">
+          <button class="antras" data-slapt="${p.vardas}">Naujas slaptažodis</button>
+          <button class="antras" data-adm="${p.vardas}" data-admdb="${p.admin ? 1 : 0}">${p.admin ? "Atimti admin" : "Suteikti admin"}</button>
+          <button class="pavojus" data-trinti="${p.vardas}">Šalinti</button>
+        </div></td>`;
+      tb.appendChild(tr);
+    }
+    tb.querySelectorAll("[data-slapt]").forEach(m => m.onclick = async () => {
+      const savas = prompt(`Naujas ${m.dataset.slapt} slaptažodis.\nĮrašyk savo, arba palik tuščią — sugeneruos stiprų automatiškai.\nSenas nustos galioti.`);
+      if (savas === null) return;   // atšaukta
+      const r2 = await fetch("/api/admin/paskyros/naujas-slaptazodis", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vardas: m.dataset.slapt, slaptazodis: savas.trim() }) });
+      const j2 = await r2.json();
+      if (!r2.ok) { $("#klaida").textContent = j2.detail || "Klaida"; return; }
+      rodytiSlaptazodi(j2.vardas, j2.slaptazodis, "Naujas slaptažodis paskyrai");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    tb.querySelectorAll("[data-adm]").forEach(m => m.onclick = async () => {
+      const r2 = await fetch("/api/admin/paskyros/admin", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vardas: m.dataset.adm, admin: m.dataset.admdb !== "1" }) });
+      const j2 = await r2.json();
+      if (!r2.ok) { $("#klaida").textContent = j2.detail || "Klaida"; return; }
+      uzkrauti();
+    });
+    tb.querySelectorAll("[data-trinti]").forEach(m => m.onclick = async () => {
+      if (!confirm(`Ištrinti paskyrą ${m.dataset.trinti}?\nSąskaitų folderis lieka — trinamas tik prisijungimas.`)) return;
+      const r2 = await fetch("/api/admin/paskyros/trinti", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vardas: m.dataset.trinti }) });
+      const j2 = await r2.json();
+      if (!r2.ok) { $("#klaida").textContent = j2.detail || "Klaida"; return; }
+      uzkrauti();
+    });
+  } catch (e) { $("#klaida").textContent = "Ryšio klaida: " + e.message; }
+}
+
+$("#vadybininkas").onchange = () => {
+  $("#vadyb-folderis").style.display = $("#vadybininkas").checked ? "" : "none";
+};
+
+$("#kurti").onclick = async () => {
+  const vardas = $("#vardas").value.trim();
+  if (!vardas) { $("#klaida").textContent = "Įvesk vardą"; return; }
+  $("#kurti").disabled = true; $("#klaida").textContent = "";
+  try {
+    const r = await fetch("/api/admin/paskyros", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vardas, admin: $("#admin").checked,
+        vadybininkas: $("#vadybininkas").checked,
+        aplinka: $("#vadybininkas").checked ? "apskaita" : "",
+        folderis: $("#vadybininkas").checked ? $("#vadyb-folderis").value.trim() : "" }) });
+    const j = await r.json();
+    if (!r.ok) { $("#klaida").textContent = j.detail || "Klaida"; }
+    else {
+      rodytiSlaptazodi(j.vardas, j.slaptazodis, "Paskyra sukurta —");
+      $("#vardas").value = ""; $("#admin").checked = false; $("#vadybininkas").checked = false;
+      $("#vadyb-folderis").value = ""; $("#vadyb-folderis").style.display = "none";
+      uzkrauti();
+    }
+  } catch (e) { $("#klaida").textContent = "Ryšio klaida: " + e.message; }
+  $("#kurti").disabled = false;
+};
+
+async function uzkrautiIslaidas() {
+  try {
+    const r = await fetch("/api/admin/islaidos");
+    if (!r.ok) return;
+    const j = await r.json();
+    $("#islaidu-pastaba").textContent =
+      `Kiek centų AI skaitymui išnaudojo kiekvienas vartotojas (modelis: ${j.modelis}).`;
+    const tb = $("#islaidu-lentele");
+    tb.innerHTML = "";
+    const eur = ct => ct >= 100 ? `${(ct / 100).toFixed(2)} €` : `${ct.toFixed(2)} ct`;
+    let visoMen = 0, visoViso = 0;
+    for (const x of j.islaidos || []) {
+      visoMen += x.sis_menuo; visoViso += x.viso;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><b>${x.vardas}</b></td>
+        <td style="text-align:right">${eur(x.sis_menuo)}</td>
+        <td style="text-align:right">${eur(x.viso)}</td>`;
+      tb.appendChild(tr);
+    }
+    if (!(j.islaidos || []).length) {
+      tb.innerHTML = `<tr><td colspan="3" class="maza">Išlaidų dar nėra — atsiras AI apdorojus pirmą sąskaitą.</td></tr>`;
+    } else {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="maza">VISO</td>
+        <td style="text-align:right"><b>${eur(visoMen)}</b></td>
+        <td style="text-align:right"><b>${eur(visoViso)}</b></td>`;
+      tb.appendChild(tr);
+    }
+  } catch (_) {}
+}
+
+function ekr(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+
+async function uzkrautiAplinkas() {
+  try {
+    const r = await fetch("/api/admin/aplinkos");
+    if (!r.ok) return;
+    const j = await r.json();
+    const b = $("#aplinku-sarasas");
+    b.innerHTML = (j.aplinkos || []).map(a => {
+      const pr = Object.entries(a.priskyrimai || {});
+      const folderiai = (a.folderiai || []).length
+        ? a.folderiai.map(f => `<div style="margin:4px 0 4px 12px">
+             📁 <b>${ekr(f.vardas)}</b> <span class="maza">(${f.failai.length} sąsk.)</span>
+             ${f.failai.length ? `<div class="maza" style="margin-left:20px">${f.failai.map(x => ekr(x)).join("<br>")}</div>` : ""}
+           </div>`).join("")
+        : `<div class="maza" style="margin-left:12px">folderių nėra</div>`;
+      return `<div style="border-top:1px solid var(--linija); padding:10px 0">
+        <div style="font-weight:700; font-size:15px">👤 ${ekr(a.aplinka)}</div>
+        <div class="maza" style="margin:2px 0 6px 0">
+          Paštas: ${a.pastas ? ekr(a.pastas) : "neprijungtas"} · apdorotų sąskaitų: ${a.saskaitu}
+          · <a href="/api/pastas/prisijungti?tiekejas=microsoft&aplinka_v=${encodeURIComponent(a.aplinka)}"
+               title="Prijungti/perjungti šios aplinkos paštą per Outlook (OAuth)">🔗 prijungti Outlook</a>
+        </div>
+        ${folderiai}
+        <div style="margin:8px 0 0 12px">
+          <div style="font-weight:600; font-size:13px; margin-bottom:4px">Siuntėjų priskyrimai</div>
+          ${pr.length ? pr.map(([e, f]) => `<div class="maza" style="margin:3px 0">
+              ${ekr(e)} → <b>${ekr(f)}</b>
+              <button class="pr-salinti" data-aplinka="${ekr(a.aplinka)}" data-adresas="${ekr(e)}"
+                style="background:none; border:none; cursor:pointer; color:var(--pilkas)">✕</button>
+            </div>`).join("") : `<div class="maza">priskyrimų nėra — visos sąskaitos kris į „Nepriskirta"</div>`}
+          <div style="display:flex; gap:6px; align-items:center; margin-top:6px; flex-wrap:wrap">
+            <input class="pr-adresas" placeholder="vardas@imone.lt" style="padding:4px 7px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit; min-width:190px">
+            <span>→</span>
+            <select class="pr-folderis" style="padding:4px 6px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit">
+              <option value="">— folderis —</option>
+              ${(a.folderiai || []).map(f => `<option value="${ekr(f.vardas)}">${ekr(f.vardas)}</option>`).join("")}
+            </select>
+            <button class="pr-prideti" data-aplinka="${ekr(a.aplinka)}"
+              style="padding:4px 10px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit; cursor:pointer">Pridėti</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("") || `<div class="maza">Aplinkų dar nėra.</div>`;
+
+    async function siustiPriskyrima(apl, adresas, folderis) {
+      const r = await fetch("/api/admin/pastas/priskyrimai", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aplinka: apl, adresas, folderis }),
+      });
+      if (!r.ok) { alert("Nepavyko: " + ((await r.json().catch(() => ({}))).detail || r.statusText)); return; }
+      uzkrautiAplinkas();
+    }
+    b.querySelectorAll(".pr-salinti").forEach(m => {
+      m.onclick = () => {
+        if (!confirm(`Pašalinti priskyrimą ${m.dataset.adresas}?\nŠio siuntėjo sąskaitos kris į „Nepriskirta" ir AI jų automatiškai neapdoros.`)) return;
+        siustiPriskyrima(m.dataset.aplinka, m.dataset.adresas, "");
+      };
+    });
+    b.querySelectorAll(".pr-prideti").forEach(m => {
+      m.onclick = () => {
+        const eilute = m.parentElement;
+        const adresas = eilute.querySelector(".pr-adresas").value.trim();
+        const folderis = eilute.querySelector(".pr-folderis").value;
+        if (!adresas || !folderis) { alert("Reikia ir adreso, ir folderio."); return; }
+        siustiPriskyrima(m.dataset.aplinka, adresas, folderis);
+      };
+    });
+  } catch (_) {}
+}
+
+async function uzkrautiPragma() {
+  try {
+    const r = await fetch("/api/admin/pragma-nustatymai");
+    if (!r.ok) return;
+    const n = await r.json();
+    $("#pr-auto").checked = !!n.auto;
+    $("#pr-bandymai").checked = !!n.bandymu_rezimas;
+    $("#pr-statusas").value = n.statusas || "Nepatvirtintas";
+    $("#pr-auto-folderis").value = n.auto_folderis || "";
+    $("#pr-savos").value = Object.entries(n.savos_imones || {}).map(([f, s]) => `${f} = ${s}`).join("\n");
+    $("#pr-busena").textContent = `duombazė: ${n.duombaze} · apskaitininkių XML: ${n.auto_folderis ? "į „" + n.auto_folderis + "“ (automatas)" : "į savo folderius (rankinis)"} · savų įmonių: ${Object.keys(n.savos_imones || {}).length}`;
+  } catch (_) {}
+}
+$("#pr-saugoti").onclick = async () => {
+  // "folderis = Sava įmonė" eilutės -> žemėlapis (tuščios praleidžiamos)
+  const savos = {};
+  $("#pr-savos").value.split("\n").forEach(e => {
+    const m = e.match(/^\s*([^=]+?)\s*=\s*(.+?)\s*$/);
+    if (m) savos[m[1]] = m[2];
+  });
+  const r = await fetch("/api/admin/pragma-nustatymai", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ auto: $("#pr-auto").checked, bandymu_rezimas: $("#pr-bandymai").checked, statusas: $("#pr-statusas").value,
+                           auto_folderis: $("#pr-auto-folderis").value.trim(), savos_imones: savos }) });
+  if (!r.ok) { alert("Nepavyko: " + ((await r.json().catch(() => ({}))).detail || r.statusText)); return; }
+  uzkrautiPragma();
+};
+
+uzkrauti();
+uzkrautiIslaidas();
+uzkrautiAplinkas();
+uzkrautiPragma();
+</script>
+</body>
+</html>

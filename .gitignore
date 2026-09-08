@@ -1,0 +1,17 @@
+.env
+__pycache__/
+*.pyc
+*.json
+!static/manifest.json
+*.pdf
+*.jpg
+*.jpeg
+*.png
+!static/*.png
+*.npz
+*.csv
+*.tsv
+*.xml
+*.mdb
+*.tmp
+.claude/

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atmintis — užpajamavimo demo</title>
+<style>
+  :root{
+    --fonas:#f6f7f9; --korta:#ffffff; --linija:#e4e7ec; --tekstas:#101828; --pilkas:#667085;
+    --akcentas:#4f46e5; --akcentas-svelnus:#eef2ff; --violetinis:#5925dc; --violetinis-fonas:#f4f3ff;
+    --zalia:#087443; --zalia-fonas:#ecfdf3; --raudona:#b42318;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--fonas); color:var(--tekstas); font-size:14px}
+  header{display:flex; align-items:center; gap:14px; padding:10px 18px; background:#fff; border-bottom:1px solid var(--linija); position:sticky; top:0; z-index:10}
+  header h1{font-size:16px; font-weight:700}
+  .tarpas{flex:1}
+  .mygtukas{background:#fff; color:var(--tekstas); border:1px solid var(--linija); border-radius:8px; padding:8px 14px; font-weight:600; cursor:pointer; text-decoration:none; font-size:13.5px}
+  .mygtukas:hover{border-color:var(--akcentas)}
+  main{max-width:1100px; margin:0 auto; padding:18px}
+  .paaiskinimas{color:var(--pilkas); font-size:13px; margin-bottom:14px}
+  #filtras{border:1px solid var(--linija); border-radius:8px; padding:8px 12px; width:340px; font:inherit; margin-bottom:14px; background:#fff}
+  #filtras:focus{outline:2px solid var(--akcentas); outline-offset:-1px}
+
+  .tiekejo-blokas{background:var(--korta); border:1px solid var(--linija); border-radius:12px; margin-bottom:14px; overflow:hidden}
+  .tiekejo-antraste{display:flex; align-items:center; gap:10px; padding:11px 14px; border-bottom:1px solid var(--linija); background:#fafbfc}
+  .tiekejo-antraste b{font-size:14px}
+  .tiekejo-antraste .kodas{color:var(--pilkas); font-size:12.5px}
+  .kiekio-zymelis{background:var(--violetinis-fonas); color:var(--violetinis); border-radius:99px; padding:2px 10px; font-size:11.5px; font-weight:700}
+
+  table{width:100%; border-collapse:collapse}
+  th{font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:var(--pilkas); text-align:left; padding:8px 14px; border-bottom:1px solid var(--linija)}
+  td{padding:9px 14px; border-bottom:1px solid #f2f4f7; vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fafbff}
+  .pr{font-family:Consolas,monospace; font-weight:700; color:var(--violetinis)}
+  .kort-pav{color:var(--pilkas); font-size:12.5px}
+  .tiek-kodas{font-family:Consolas,monospace; font-size:12px; color:var(--pilkas)}
+  .savikaina{font-weight:700; white-space:nowrap}
+  .desine{text-align:right}
+  .pilka{color:var(--pilkas); font-size:12.5px; white-space:nowrap}
+  .trinti{background:none; border:none; color:var(--pilkas); cursor:pointer; font-size:14px}
+  .trinti:hover{color:var(--raudona)}
+  #tuscia{background:var(--korta); border:1px dashed var(--linija); border-radius:12px; padding:44px; text-align:center; color:var(--pilkas)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Atmintis <span id="viso" class="kiekio-zymelis" style="margin-left:6px"></span></h1>
+  <div class="tarpas"></div>
+  <a class="mygtukas" href="/">← Sąskaitos</a>
+</header>
+
+<main>
+  <p class="paaiskinimas">
+    Čia viskas, ką sistema išmoko iš tavo parinkimų (įsimenama spaudžiant „Generuoti XML").
+    Kitą kartą įkėlus to paties tiekėjo sąskaitą su ta pačia preke — pr kodas užsidės automatiškai,
+    o savikaina lyginama su įsiminta.
+  </p>
+  <input id="filtras" placeholder="🔍 Filtruoti (prekė, pr kodas, tiekėjas)…">
+  <div id="turinys"></div>
+</main>
+
+<script>
+"use strict";
+let IRASAI = [];
+const $ = s => document.querySelector(s);
+
+function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+
+async function uzkrauti() {
+  const r = await fetch("/api/atmintis");
+  IRASAI = (await r.json()).irasai || [];
+  piesti();
+}
+
+function piesti() {
+  const f = $("#filtras").value.trim().toLowerCase();
+  const irasai = f
+    ? IRASAI.filter(i => (i.preke + " " + i.pr_kodas + " " + i.tiekejas + " " + (i.pr_pavadinimas || "") + " " + (i.tiekejo_prekes_kodas || "")).toLowerCase().includes(f))
+    : IRASAI;
+  $("#viso").textContent = `${IRASAI.length} įraš.`;
+
+  const k = $("#turinys");
+  if (!irasai.length) {
+    k.innerHTML = `<div id="tuscia">${IRASAI.length ? "Pagal filtrą nieko nerasta." : "Atmintis tuščia.<br>Įkelk sąskaitą, parink korteles ir paspausk „Generuoti XML“ — parinkimai atsiras čia."}</div>`;
+    return;
+  }
+
+  const grupes = {};
+  irasai.forEach(i => {
+    const raktas = i.tiekejas || "(be tiekėjo)";
+    (grupes[raktas] = grupes[raktas] || []).push(i);
+  });
+
+  k.innerHTML = Object.entries(grupes).map(([tiekejas, sarasas]) => `
+    <div class="tiekejo-blokas">
+      <div class="tiekejo-antraste">
+        <b>${escapeHtml(tiekejas)}</b>
+        ${sarasas[0].tiekejo_imones_kodas ? `<span class="kodas">įm. k. ${escapeHtml(sarasas[0].tiekejo_imones_kodas)}</span>` : ""}
+        <span class="kiekio-zymelis">${sarasas.length} prekės</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th style="width:34%">Tiekėjo prekė</th>
+          <th style="width:30%">pr kortelė</th>
+          <th class="desine">Savikaina</th>
+          <th>Vnt.</th>
+          <th class="desine">Kartai</th>
+          <th>Atnaujinta</th>
+          <th></th>
+        </tr></thead>
+        <tbody>
+          ${sarasas.map(i => `
+            <tr>
+              <td>${escapeHtml(i.preke)}${i.tiekejo_prekes_kodas ? `<br><span class="tiek-kodas">kodas: ${escapeHtml(i.tiekejo_prekes_kodas)}</span>` : ""}</td>
+              <td><span class="pr">${escapeHtml(i.pr_kodas)}</span>${i.pr_pavadinimas ? `<br><span class="kort-pav">${escapeHtml(i.pr_pavadinimas)}</span>` : ""}</td>
+              <td class="desine savikaina">${i.savikaina != null ? (+i.savikaina).toFixed(2) + " €" : "—"}</td>
+              <td>${escapeHtml(i.vienetas || "")}</td>
+              <td class="desine">${i.kartai || 1}×</td>
+              <td class="pilka">${escapeHtml(i.atnaujinta || "")}</td>
+              <td><button class="trinti" title="Užmiršti" onclick="trinti('${i.id}')">✕</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>`).join("");
+}
+
+async function trinti(id) {
+  if (!confirm("Užmiršti šį parinkimą? Kitą kartą reikės parinkti iš naujo.")) return;
+  await fetch("/api/atmintis/trinti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+  uzkrauti();
+}
+window.trinti = trinti;
+
+$("#filtras").oninput = piesti;
+uzkrauti();
+</script>
+</body>
+</html>

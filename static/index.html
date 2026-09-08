@@ -1,0 +1,2918 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Užpajamavimas</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/static/ikona-192.png">
+<meta name="theme-color" content="#2563eb">
+<style>
+  :root{
+    --fonas:#f6f7f9; --korta:#ffffff; --linija:#e4e7ec; --tekstas:#101828; --pilkas:#667085;
+    --akcentas:#4f46e5; --akcentas-svelnus:#eef2ff; --zalia:#087443; --zalia-fonas:#ecfdf3;
+    --geltona:#b54708; --geltona-fonas:#fffaeb; --raudona:#b42318; --raudona-fonas:#fef3f2;
+  }
+  *{box-sizing:border-box; margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--fonas); color:var(--tekstas); font-size:14px}
+  input,select,button,textarea{font:inherit}
+  input{border:1px solid var(--linija); border-radius:8px; padding:7px 10px; width:100%; background:#fff}
+  input:focus,textarea:focus{outline:2px solid var(--akcentas); outline-offset:-1px; border-color:transparent}
+  /* Prekes pavadinimas — VISAS matomas: laukas pats issitempia i tiek eiluciu,
+     kiek reikia (Pragmoje jis nukerpamas, todel skaitomas tik cia) */
+  .pavadinimo-laukas{border:1px solid var(--linija); border-radius:8px; padding:7px 10px; width:100%;
+    background:#fff; resize:none; overflow:hidden; line-height:1.35; min-height:36px}
+  label{font-size:11.5px; color:var(--pilkas); font-weight:600; display:block; margin-bottom:3px}
+
+  header{display:flex; align-items:center; gap:14px; padding:10px 18px; background:#fff; border-bottom:1px solid var(--linija); position:sticky; top:0; z-index:10}
+  header h1{font-size:16px; font-weight:700}
+  header h1 span{color:var(--akcentas)}
+  .busena{font-size:12px; color:var(--pilkas)}
+  .tarpas{flex:1}
+  .mygtukas{background:var(--akcentas); color:#fff; border:none; border-radius:8px; padding:9px 16px; font-weight:600; cursor:pointer}
+  .mygtukas:hover{filter:brightness(1.08)}
+  .mygtukas:disabled{opacity:.5; cursor:default}
+  .mygtukas.antras{background:#fff; color:var(--tekstas); border:1px solid var(--linija)}
+
+  /* Ikelimo ekranas */
+  #ikelimo-ekranas{display:flex; flex-direction:column; align-items:center; gap:22px; padding:34px 18px 60px}
+  #zona{background:var(--korta); border:2px dashed var(--linija); border-radius:16px; padding:34px 80px; text-align:center; cursor:pointer; transition:.15s}
+  #zona:hover,#zona.velkama{border-color:var(--akcentas); background:var(--akcentas-svelnus)}
+  #zona .ikona{font-size:34px}
+  #zona h2{font-size:17px; margin:8px 0 5px}
+  #zona p{color:var(--pilkas); font-size:13px}
+
+  /* Darbuotoju folderiai */
+  #folderiai,#apdorotos{width:100%; max-width:1040px}
+  #folderiai h2,#apdorotos h2{font-size:13px; color:var(--pilkas); text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px}
+  .apdorota-eilute{display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--korta); border:1px solid var(--linija); border-radius:10px; padding:10px 14px; margin-bottom:7px; cursor:pointer; font:inherit; font-size:13px}
+  .apdorota-eilute:hover{border-color:var(--akcentas)}
+  .apdorota-eilute b{min-width:180px}
+  .apdorota-eilute .nr{font-family:Consolas,monospace; color:var(--akcentas)}
+  .apdorota-eilute .pilka{color:var(--pilkas); font-size:12px}
+  .apdorota-eilute .xml-zyme{margin-left:auto; background:var(--zalia-fonas); color:var(--zalia); border-radius:99px; padding:1px 9px; font-size:11.5px; font-weight:700}
+  .apdorota-eilute .pragma-zyme{background:var(--zalia-fonas); color:var(--zalia); border-radius:99px; padding:1px 9px; font-size:11.5px; font-weight:700}
+  .apdorota-eilute .be-xml{margin-left:auto; color:var(--pilkas); font-size:11.5px}
+  .apdorota-eilute .tvarko-zyme{background:#fff3cd; color:#8a6d00; border-radius:99px; padding:1px 9px; font-size:11.5px; font-weight:700}
+  .grupes-antraste{display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:700; color:var(--pilkas); text-transform:uppercase; letter-spacing:.4px; margin:2px 0 8px}
+  .grupes-antraste:not(:first-child){margin-top:18px}
+  .grupes-antraste::after{content:""; flex:1; height:1px; background:var(--linija)}
+  .grupes-antraste .kiek{font-weight:600; text-transform:none; letter-spacing:0}
+  .failo-zyme{font-size:10.5px; font-weight:700; border-radius:6px; padding:1px 5px; background:var(--zalia-fonas); color:var(--zalia); white-space:nowrap}
+  .failo-zyme.vyksta{background:var(--akcentas-svelnus); color:var(--akcentas); animation:pulsas 1.4s ease-in-out infinite}
+  .failo-zyme.klaida{background:var(--raudona-fonas); color:var(--raudona)}
+  @keyframes pulsas{0%,100%{opacity:1} 50%{opacity:.45}}
+  .folderiu-tinklelis{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+  .folderis{background:var(--korta); border:1px solid var(--linija); border-radius:12px; overflow:hidden}
+  .folderio-antraste{display:flex; align-items:center; gap:9px; padding:11px 14px; border-bottom:1px solid var(--linija); background:#fafbfc; font-weight:700}
+  .folderio-antraste .kiekis{margin-left:auto; background:var(--akcentas-svelnus); color:var(--akcentas); border-radius:99px; padding:1px 9px; font-size:11.5px}
+  .folderio-failai{padding:6px}
+  .folderio-failas{display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:8px 9px; border:none; background:none; border-radius:8px; cursor:pointer; font:inherit; font-size:13px}
+  .folderio-failas:hover{background:var(--akcentas-svelnus)}
+  /* Suskleisti folderiai pagrindiniame ekrane: tik statusas, sarasas — paspaudus */
+  .folderis-kortele{cursor:pointer}
+  .folderis-kortele:hover{border-color:var(--akcentas)}
+  .folderio-statusas{display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 14px; font-size:12.5px}
+  .folderio-statusas .stat-laukia{background:#fff3cd; color:#8a6d00; border-radius:99px; padding:2px 10px; font-weight:700}
+  .folderio-statusas .stat-gerai{background:var(--zalia-fonas); color:var(--zalia); border-radius:99px; padding:2px 10px; font-weight:700}
+  .folderio-statusas .stat-vyksta{color:var(--akcentas); font-weight:600; animation:pulsas 1.4s ease-in-out infinite}
+  .folderio-statusas .stat-klaida{background:var(--raudona-fonas); color:var(--raudona); border-radius:99px; padding:2px 10px; font-weight:700}
+  .folderio-statusas .stat-pilka{color:var(--pilkas)}
+  .folderio-failas .dydis{margin-left:auto; color:var(--pilkas); font-size:11.5px; white-space:nowrap}
+  .folderis-tuscias{color:var(--pilkas); font-size:12.5px; padding:12px 14px}
+  .folderio-trinti{border:none; background:none; cursor:pointer; font-size:13px; opacity:.35; padding:2px 4px; border-radius:6px}
+  .folderio-trinti:hover{opacity:1; background:#fee2e2}
+  .failo-trinti{font-size:12px; opacity:.3; padding:2px 4px; border-radius:6px}
+  .folderio-failas:hover .failo-trinti{opacity:.7}
+  .failo-trinti:hover{opacity:1 !important; background:#fee2e2}
+  .pasto-blokas{display:flex; align-items:center; gap:10px; background:var(--korta); border:1px solid var(--linija); border-radius:10px; padding:9px 14px; margin-bottom:12px; font-size:13px}
+  .pasto-blokas a{color:var(--akcentas); text-decoration:none; font-weight:600}
+  .pasto-blokas a:hover{text-decoration:underline}
+  .pasto-badge{background:var(--zalia-fonas); color:var(--zalia); border-radius:99px; padding:2px 10px; font-weight:700; font-size:12px; cursor:pointer}
+  .pasto-tikrinti{margin-left:auto; font-size:12.5px; padding:5px 11px}
+  .apdorota-trinti{background:none; border:none; color:var(--pilkas); cursor:pointer; font-size:14px; padding:2px 6px}
+  .apdorota-trinti:hover{color:var(--raudona)}
+
+  /* Krovimo uzdanga */
+  #uzdanga{display:none; position:fixed; inset:0; background:rgba(255,255,255,.85); z-index:50; align-items:center; justify-content:center; flex-direction:column; gap:14px}
+  .sukas{width:36px; height:36px; border:4px solid var(--linija); border-top-color:var(--akcentas); border-radius:50%; animation:suk 0.8s linear infinite}
+  @keyframes suk{to{transform:rotate(360deg)}}
+  #uzdanga p{color:var(--pilkas); font-weight:600}
+
+  /* Darbo ekranas */
+  #darbo-ekranas{display:none; height:calc(100vh - 53px)}
+  #darbo-ekranas.aktyvus{display:grid; grid-template-columns:44% 56%}
+  #kaire{border-right:1px solid var(--linija); background:#525659}
+  #kaire iframe,#kaire img{width:100%; height:100%; border:none; object-fit:contain}
+  #desine{overflow-y:auto; padding:16px 18px 90px}
+
+  .kortele{background:var(--korta); border:1px solid var(--linija); border-radius:12px; padding:14px; margin-bottom:12px}
+  .kortele h3{font-size:13px; margin-bottom:10px; color:var(--pilkas); text-transform:uppercase; letter-spacing:.4px}
+  .tinklelis{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .tinklelis .platus{grid-column:span 3}
+
+  .juosta{border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:13px}
+  .juosta.geltona{background:var(--geltona-fonas); color:var(--geltona); border:1px solid #fedf89}
+  .juosta.raudona{background:var(--raudona-fonas); color:var(--raudona); border:1px solid #fecdca}
+  .juosta.melyna{background:var(--akcentas-svelnus); border:1px solid var(--linija)}
+  .juosta.melyna a{color:var(--akcentas); font-weight:600}
+  table.xl{border-collapse:collapse; font-size:12px; table-layout:fixed}
+  table.xl td{border:1px solid var(--linija); padding:3px 7px; vertical-align:top; overflow-wrap:break-word; max-width:340px}
+  .xl-skirtukai{display:flex; gap:6px; margin-bottom:8px}
+  .xl-skirtukai button{padding:4px 12px; border-radius:8px; border:1px solid var(--linija); background:var(--korta); color:inherit; cursor:pointer; font-size:12.5px}
+  .xl-skirtukai button.aktyvus{background:var(--akcentas-svelnus); color:var(--akcentas); font-weight:700}
+  #paketo-juosta{display:flex; gap:6px; flex-wrap:wrap; padding:8px 0 10px; border-bottom:1px dashed var(--linija); margin-bottom:10px}
+  .pak-tab{padding:5px 12px; border-radius:8px; border:1px solid var(--linija); background:var(--korta); color:inherit; cursor:pointer; font-size:12.5px; font:inherit}
+  .pak-tab.aktyvus{background:var(--akcentas-svelnus); color:var(--akcentas); font-weight:700; border-color:var(--akcentas)}
+  .pak-tab.pilkas{color:var(--pilkas); cursor:default; border-style:dashed}
+  .apdorota-eilute .pak-zyme{background:var(--akcentas-svelnus); color:var(--akcentas); border-radius:99px; padding:1px 9px; font-size:11.5px; font-weight:700}
+  .juosta ul{margin-left:16px}
+
+  /* Eilutes */
+  .eilute{background:var(--korta); border:1px solid var(--linija); border-radius:12px; margin-bottom:10px; overflow:hidden}
+  .eilute .virsus{display:grid; grid-template-columns:20px 26px 1fr 74px 64px 88px 88px 60px 74px 26px 26px 26px 30px; gap:8px; padding:12px; align-items:end}
+  /* APSKAITOS DARBO SARASAS: filtrai, dienu grupes, VIENAS busenos zenkliukas */
+  .filtrai{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:0 0 12px; padding:10px 12px; background:var(--korta); border:1px solid var(--linija); border-radius:12px}
+  .filtrai input,.filtrai select{padding:6px 8px; border:1px solid var(--linija); border-radius:8px; background:var(--fonas,#fff); color:inherit; font-size:12.5px}
+  .filtrai #f-tekstas{flex:1; min-width:200px}
+  .filtrai .varn{display:flex; gap:5px; align-items:center; font-size:12.5px; color:var(--pilkas)}
+  .filtrai .mygtukas{margin:0}
+  .dienos-antraste{font-size:11.5px; color:var(--pilkas); font-weight:700; margin:10px 0 4px 4px; letter-spacing:.03em}
+  .dienos-antraste .pilka{font-weight:400}
+  .bz{margin-left:auto; border-radius:99px; padding:1px 9px; font-size:11.5px; font-weight:700; white-space:nowrap}
+  .bz-laukia{background:#fef3c7; color:#92400e}
+  .bz-issiusta{background:#dbeafe; color:#1e40af}
+  .bz-ikelta{background:var(--zalia-fonas); color:var(--zalia)}
+  .bz-klaida{background:#fee2e2; color:#991b1b}
+  /* PVM koregavimas per BENDRA suma su PVM (apskaitai) */
+  #su-pvm-laukas{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--pilkas); white-space:nowrap}
+  #su-pvm-laukas input{width:104px; padding:5px 7px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font-weight:600}
+  body.vadybininkas #su-pvm-laukas{display:none}
+  .pvm-skiriasi{border-color:#f59e0b !important; background:#fffbeb !important}
+  /* VADYBININKO eilute — DVI EILES: pirkimas tekstu (kontekstas), pardavimas
+     ant VIENETO (be PVM / su PVM / marza %). Niekas nesikerpa jokiam plotyje. */
+  .vad-virsus{display:grid; grid-template-columns:20px 26px 1fr auto; gap:8px; padding:10px 12px 2px; align-items:start}
+  .vad-virsus .pavadinimo-laukas{width:100%; font-weight:600; min-height:34px; max-height:110px; overflow:auto; resize:vertical}
+  .vad-irankiai{display:flex; gap:4px}
+  .vad-irankiai button{border:1px solid var(--linija); background:var(--korta); border-radius:6px; padding:3px 7px; cursor:pointer; color:inherit}
+  .vad-zyme{font-size:10.5px; font-weight:700; letter-spacing:.05em; color:var(--pilkas); min-width:84px}
+  .vad-pirkimas{display:flex; gap:8px; align-items:center; padding:4px 12px 4px 54px; font-size:12.5px}
+  .vad-pirkimas .pilka,.vad-pardavimas .pilka{color:var(--pilkas); font-weight:400}
+  .vad-redaguoti{border:none; background:none; cursor:pointer; color:var(--pilkas); font-size:13px; padding:0 4px}
+  .vad-kiekis{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--pilkas)}
+  .vad-kiekis input{width:72px; padding:4px 6px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font-size:13px; font-weight:600}
+  .vad-pirkimo-laukai{display:grid; grid-template-columns:repeat(6, minmax(80px, 1fr)); gap:8px; padding:4px 12px 8px 54px}
+  .vad-pardavimas{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:4px 12px 10px 54px; padding:8px 10px; background:var(--zalia-fonas); border-radius:8px; font-size:12.5px}
+  .vad-pardavimas label{display:flex; flex-direction:column; gap:2px; font-size:11px; color:var(--pilkas)}
+  .vad-pardavimas input{width:96px; padding:5px 7px; border:1px solid var(--zalia); border-radius:6px; background:var(--korta); color:inherit; font-size:13px; font-weight:600}
+  .vad-pardavimas select{max-width:360px; padding:5px 6px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font-size:12px}
+  .vad-sumos{margin-left:auto}
+  .pardavimo-laukai .pd-pastaba{grid-column:1/-1}
+  .pardavimo-laukai textarea{padding:6px 8px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font:inherit; font-size:12.5px; width:100%; resize:vertical}
+  /* Apskaitai: vadybininko pardavimo suma rodoma PO eilute (bendras vaizdas —
+     pajamavimas virsuj, pardavimas apacioj) */
+  .pardavimo-perziura{padding:0 12px 10px 54px; font-size:12.5px; color:var(--zalia); font-weight:600}
+  .pardavimo-perziura .pilka{color:var(--pilkas); font-weight:400}
+  /* PRAGMA JUOSTA (apskaitai): ka darysim su saskaita Pragmoje — viena pilka
+     eilute su pasiulytom reiksmem, „Keisti" isskleidzia select'us */
+  #pragma-juosta{background:var(--korta); border:1px solid var(--linija); border-radius:12px; padding:10px 14px; margin-bottom:12px; font-size:13px}
+  .pragma-santrauka{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .pragma-santrauka .pilka{color:var(--pilkas); font-size:12px}
+  .pragma-santrauka .mygtukas{margin-left:auto}
+  .pragma-bandom{background:#fde68a; color:#7c2d12; border-radius:99px; padding:1px 8px; font-size:11px; font-weight:700}
+  .pragma-laukai{display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; margin-top:10px; align-items:end}
+  .pragma-laukai label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--pilkas)}
+  .pragma-laukai select{padding:5px 6px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font-size:12.5px; max-width:100%}
+  /* Vadybininko pardavimo blokas */
+  .pardavimo-laukai{display:grid; grid-template-columns:2fr 1.4fr 1.6fr 1fr 1fr; gap:8px; margin-top:8px; align-items:start}
+  .pardavimo-laukai label{display:flex; flex-direction:column; gap:3px; font-size:11.5px; color:var(--pilkas)}
+  .pardavimo-laukai input,.pardavimo-laukai select{padding:6px 8px; border:1px solid var(--linija); border-radius:6px; background:var(--korta); color:inherit; font-size:12.5px; width:100%}
+  .pardavimo-laukai .pd-klaida{color:var(--raudona); font-size:11.5px; min-height:0}
+  @media (max-width:1100px){.pardavimo-laukai{grid-template-columns:1fr 1fr}}
+  .vadyb-tik{display:none !important}
+  body.vadybininkas .vadyb-tik{display:inline-block !important}
+  /* Vadybininkui korteliu parinkimas nereikalingas — tai apskaitos darbas */
+  body.vadybininkas .korteles-blokas{display:none}
+  /* Paketavimo varnele salia eilutes (vadybininkui) */
+  .pak-eilute{display:flex; align-items:center; gap:8px}
+  .pak-eilute .apdorota-eilute{flex:1; min-width:0}
+  .pak-varne{width:16px; height:16px; cursor:pointer; flex:none}
+  .eilute .apdalinti{border:none; background:none; cursor:pointer; font-size:14px; padding-bottom:6px; opacity:.55}
+  .eilute .apdalinti:hover{opacity:1}
+  .eilute .nauja-is{border:none; background:none; cursor:pointer; font-size:14px; padding-bottom:6px; opacity:.55}
+  .eilute .nauja-is:hover{opacity:1}
+  .eilute .skaidyti{border:none; background:none; cursor:pointer; font-size:14px; padding-bottom:6px; opacity:.55}
+  .eilute .skaidyti:hover{opacity:1}
+  .eilute .nr{color:var(--pilkas); font-weight:700; padding-bottom:8px}
+  .eilute .sujungti-varne{width:15px; height:15px; margin-bottom:9px; cursor:pointer; accent-color:var(--akcentas)}
+  .eilute .komponentai{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:-4px 12px 8px 40px; font-size:12px; color:var(--pilkas)}
+  .eilute .komponentai .isardyti{border:1px solid var(--linija); background:none; color:inherit; border-radius:7px; padding:2px 9px; font-size:11.5px; cursor:pointer}
+  .eilute .komponentai .isardyti:hover{border-color:var(--akcentas); color:var(--akcentas)}
+  .eilute.nesutampa{border-color:#fda29b}
+  .trinti{background:none; border:none; color:var(--pilkas); cursor:pointer; font-size:15px; padding-bottom:8px}
+  .trinti:hover{color:var(--raudona)}
+
+  .korteles-blokas{border-top:1px dashed var(--linija); padding:10px 12px; background:#fafbfc}
+  .pasirinkta-kortele{display:flex; align-items:center; gap:8px; font-size:12.5px; margin-bottom:8px}
+  .zymelis{display:inline-block; padding:2px 9px; border-radius:99px; font-size:11.5px; font-weight:700}
+  .zymelis.zalias{background:var(--zalia-fonas); color:var(--zalia)}
+  .zymelis.pilkas{background:#f2f4f7; color:var(--pilkas)}
+  .zymelis.melynas{background:var(--akcentas-svelnus); color:var(--akcentas)}
+  .zymelis.violetinis{background:#f4f3ff; color:#5925dc}
+  .savikainos-pokytis{color:var(--geltona); font-size:12px; font-weight:600}
+
+  /* Sarasas slenkamas: rodom 5-6 korteles, likusios pasiekiamos ratuku */
+  .rek-sarasas{display:flex; flex-direction:column; gap:4px; max-height:230px; overflow-y:auto; padding-right:4px}
+  .rek-sarasas::-webkit-scrollbar{width:8px}
+  .rek-sarasas::-webkit-scrollbar-thumb{background:var(--linija); border-radius:4px}
+  .rek{display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border:1px solid var(--linija); border-radius:8px; cursor:pointer; background:#fff; font-size:12.5px; text-align:left; width:100%}
+  .rek:hover{border-color:var(--akcentas)}
+  .rek.parinkta{border-color:var(--akcentas); background:var(--akcentas-svelnus)}
+  .rek.blanki{opacity:.5}
+  .rek .balas{min-width:44px; flex:none; text-align:center; font-weight:700; border-radius:6px; padding:1px 4px; font-size:11px}
+  .balas.geras{background:var(--zalia-fonas); color:var(--zalia)}
+  .balas.vidutinis{background:#f2f4f7; color:var(--pilkas)}
+  .rek .kodas{font-family:Consolas,monospace; color:var(--akcentas); font-weight:600; min-width:64px; flex:none}
+  /* Pavadinimas rodomas PILNAS — persikelia i kita eilute, o ne nukerpamas */
+  .rek .pav{flex:1; white-space:normal; overflow-wrap:anywhere; line-height:1.35}
+  .rek .zyme{color:var(--pilkas); font-size:11px; white-space:nowrap; flex:none}
+  .pasirinkta-kortele{white-space:normal; overflow-wrap:anywhere; line-height:1.4}
+
+  .kort-irankiai{display:flex; gap:8px; margin-top:8px}
+  .kort-irankiai input{flex:1}
+  .maza{font-size:12.5px; padding:6px 10px}
+  .nauja-forma{display:none; gap:8px; margin-top:8px; align-items:center}
+  .nauja-forma.aktyvi{display:flex}
+  .nauja-pastaba{color:var(--pilkas); font-size:12px; line-height:1.3}
+
+  /* Apacia */
+  #apacia{position:fixed; bottom:0; right:0; width:56%; background:#fff; border-top:1px solid var(--linija); padding:10px 18px; display:none; align-items:center; gap:16px; z-index:20}
+  #darbo-ekranas.aktyvus ~ #apacia,#apacia.aktyvi{display:flex}
+  .sumos{display:flex; gap:14px; font-size:13px}
+  .sumos b{font-size:14px}
+  .sutampa{color:var(--zalia)} .nesutampa-t{color:var(--geltona)}
+  #klaida-apacia{color:var(--raudona); font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Užpajamavimo <span>demo</span></h1>
+  <div class="busena" id="busenos-tekstas">kraunasi…</div>
+  <div class="tarpas"></div>
+  <div class="busena" id="issaugojimo-busena"></div>
+  <div class="busena" id="ai-kaina"></div>
+  <button class="mygtukas antras" id="atstatyti-pradine" style="display:none" title="Atstatyti VISKĄ į pradinį AI nuskaitymą — visi redagavimai, sujungimai ir parinkimai dings (be AI, nemokamai)">↩ Atstatyti pradinę</button>
+  <button class="mygtukas antras" id="ai-is-naujo" style="display:none" title="Perleisti AI ekstrakciją šitam failui">🔄 AI iš naujo</button>
+  <span class="busena" id="vartotojo-blokas" style="display:none"></span>
+  <button class="mygtukas antras" id="idiegti" style="display:none" title="Įsidėti kaip programą į darbalaukį">⬇ Įdiegti į darbalaukį</button>
+  <a class="mygtukas antras" href="/atmintis" style="text-decoration:none">🧠 Atmintis</a>
+  <button class="mygtukas antras" id="nauja-saskaita" style="display:none">Nauja sąskaita</button>
+</header>
+
+<div id="ikelimo-ekranas">
+  <div id="zona">
+    <div class="ikona">🧾</div>
+    <h2>Įkelk pirkimo sąskaitą</h2>
+    <p>PDF arba skenuota nuotrauka (JPG/PNG)<br>AI ištrauks duomenis, o katalogas pasiūlys prekių korteles</p>
+    <input type="file" id="failo-input" accept=".pdf,.jpg,.jpeg,.png,.webp" hidden>
+  </div>
+  <div id="folderiai">
+    <h2>📁 Projektų vadovų sąskaitos <button class="mygtukas antras maza" id="naujas-folderis" style="float:right; text-transform:none; letter-spacing:0">+ Naujas folderis</button></h2>
+    <div id="pasto-blokas" class="pasto-blokas"></div>
+    <div class="folderiu-tinklelis" id="folderiu-tinklelis"></div>
+  </div>
+  <div id="apdorotos">
+    <h2>🗂 Apdorotos sąskaitos <span style="text-transform:none; font-weight:400">(atsidaro iš karto, be AI)</span></h2>
+    <div class="filtrai" id="sarasu-filtrai">
+      <input id="f-tekstas" placeholder="🔍 tiekėjas, numeris, Pragmos ID, TKL…">
+      <input id="f-nuo" type="date" title="Sąskaitos data nuo">
+      <input id="f-iki" type="date" title="Sąskaitos data iki">
+      <select id="f-folderis"><option value="">visi folderiai</option></select>
+      <select id="f-busena"><option value="">visos būsenos</option><option value="laukia">🟡 laukia</option><option value="issiusta">🔵 išsiųsta</option><option value="klaida">🔴 klaida / dublikatas</option></select>
+      <label class="varn"><input type="checkbox" id="f-mano"> tik mano</label>
+      <button class="mygtukas antras maza" id="f-rikiavimas" title="Rikiavimo tvarka pagal sąskaitos datą (įsimenama)">⬆ seniausios viršuje</button>
+      <button class="mygtukas antras maza" id="archyvo-mygtukas" title="Į Pragmą įkeltos sąskaitos — darbo sąraše jų nebėra">🗄 Archyvas <span id="archyvo-kiek"></span></button>
+    </div>
+    <div id="apdorotu-sarasas"></div>
+    <button class="mygtukas maza" id="paketo-mygtukas" style="display:none; margin-top:8px" title="Pažymėtos sąskaitos sudedamos į vieną 📦 paketą — apskaita jas matys kartu">📦 Sujungti į paketą</button>
+  </div>
+</div>
+
+<div id="uzdanga"><div class="sukas"></div><p id="uzdangos-tekstas">AI skaito sąskaitą… (~10–30 s)</p></div>
+
+<div id="darbo-ekranas">
+  <div id="kaire"></div>
+  <div id="desine">
+    <div id="paketo-juosta" style="display:none"></div>
+    <div id="ispejimai"></div>
+
+    <div class="kortele">
+      <h3>Sąskaitos duomenys</h3>
+      <div class="tinklelis">
+        <div class="platus"><label>Tiekėjas</label><input data-l="tiekejas.pavadinimas"></div>
+        <div><label>Tiekėjo įm. kodas</label><input data-l="tiekejas.imones_kodas"></div>
+        <div><label>Tiekėjo PVM kodas</label><input data-l="tiekejas.pvm_kodas"></div>
+        <div><label>Valiuta</label><input data-l="valiuta"></div>
+        <div><label>Tiekėjo gatvė</label><input data-l="tiekejas.gatve"></div>
+        <div><label>Tiekėjo miestas</label><input data-l="tiekejas.miestas"></div>
+        <div><label>Tiekėjo pašto kodas</label><input data-l="tiekejas.pasto_kodas"></div>
+        <div><label>Sąskaitos nr.</label><input data-l="saskaitos_numeris"></div>
+        <div><label>Data</label><input data-l="saskaitos_data" placeholder="YYYY-MM-DD"></div>
+        <div><label>Apmokėti iki</label><input data-l="apmoketi_iki" placeholder="YYYY-MM-DD"></div>
+        <div class="platus"><label>Pirkėjas</label><input data-l="pirkejas.pavadinimas"></div>
+        <div><label>Pirkėjo įm. kodas</label><input data-l="pirkejas.imones_kodas"></div>
+        <div><label>Pirkėjo PVM kodas</label><input data-l="pirkejas.pvm_kodas"></div>
+        <div><label>Pirkėjo miestas</label><input data-l="pirkejas.miestas"></div>
+      </div>
+    </div>
+
+    <div id="pragma-juosta" style="display:none"></div>
+
+    <div class="kortele">
+      <h3>Prekių eilutės <span id="eiluciu-sk" style="text-transform:none"></span></h3>
+      <div id="eilutes"></div>
+      <button class="mygtukas antras maza" id="prideti-eilute">+ Pridėti eilutę</button>
+      <button class="mygtukas maza" id="sujungti-eilutes" style="display:none" title="Pažymėtos eilutės sujungiamos į vieną — sumos susideda centas į centą">🔗 Sujungti pažymėtas</button>
+      <button class="mygtukas antras maza vadyb-tik" id="sutarties-mygtukas" title="Parinkti tiekėjo sutartį — tada prie eilučių galima pritraukti sutartines pozicijas su įkainiais">📑 Sutartis</button>
+      <button class="mygtukas antras maza vadyb-tik" id="marza-visoms" title="Pardavimo kaina = pirkimo suma + marža % — visoms eilutėms iškart (eilutės su sutarties pozicija nekeičiamos)">％ Marža visoms</button>
+    </div>
+  </div>
+</div>
+
+<div id="apacia">
+  <div class="sumos" id="sumu-blokas"></div>
+  <label id="su-pvm-laukas" title="Įrašyk dokumento sumą SU PVM iš popieriaus — centų skirtumas (tiekėjo apvalinimas) sulyginamas: suma be PVM pagal dokumentą (ant didžiausios eilutės), likutis — ant PVM">Su PVM dokumente <input id="su-pvm-dok" type="number" step="0.01"></label>
+  <button class="mygtukas antras maza" id="su-pvm-taikyti" title="Sulyginti eilučių centus su dokumentu: suma be PVM ir suma su PVM kaip popieriuje">⟲ sulyginti</button>
+  <div class="tarpas"></div>
+  <span id="klaida-apacia"></span>
+  <button class="mygtukas" id="perduoti-apskaitai" style="display:none">✅ Perduoti apskaitai</button>
+  <button class="mygtukas" id="generuoti-xml">⬇ Generuoti XML</button>
+</div>
+
+<script>
+"use strict";
+let B = null; // busena: {failo_id, mime, saskaita, eilutes[]}
+
+// Jei lango zymes nera (programa ka tik atidaryta) — ekranas slepiamas IKI
+// patikros, kad prieš login nesmeksteltu programos turinys
+try {
+  if (sessionStorage.getItem("uzp_gyva") !== "1") document.documentElement.style.visibility = "hidden";
+} catch (_) {}
+
+// ── Darbalaukio programa (PWA) ───────────────────────────────────────────
+// Service worker'is nieko necachina — jis reikalingas tik tam, kad narsykle
+// leistu idiegti programa i darbalauki (savo langas, ikona, be adreso juostos).
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
+let idiegimoUzklausa = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  idiegimoUzklausa = e;
+  const m = document.getElementById("idiegti");
+  if (m) m.style.display = "";
+});
+window.addEventListener("appinstalled", () => {
+  const m = document.getElementById("idiegti");
+  if (m) m.style.display = "none";
+});
+
+const $ = s => document.querySelector(s);
+const sk2 = v => (Math.round((+v || 0) * 100) / 100).toFixed(2);
+
+// ── SPARTA ANT LETO TINKLO: sarasai rodomi IS KARTO is paskutines kopijos
+// (localStorage), o tinklu tik atnaujinami fone — atidarymas momentinis
+function isKeso(raktas) { try { return JSON.parse(localStorage.getItem(raktas) || "null"); } catch (_) { return null; } }
+function iKesa(raktas, v) { try { localStorage.setItem(raktas, JSON.stringify(v)); } catch (_) {} }
+
+// ── VIENAS LANGAS: antras programos langas TAME PAČIAME kompiuteryje
+// neleidžiamas — rodomas užsklandos pranešimas. Kolegų kompiuteriams netrukdo.
+let _langoBlokas = false;
+function rodytiLangoBloka() {
+  if (_langoBlokas) return;
+  _langoBlokas = true;
+  const d = document.createElement("div");
+  d.style.cssText = "position:fixed; inset:0; z-index:9999; background:var(--fonas,#fff); display:flex; align-items:center; justify-content:center; text-align:center; padding:24px";
+  d.innerHTML = `<div><div style="font-size:42px; margin-bottom:10px">🪟</div>
+    <h2 style="margin:0 0 8px">Programa jau atidaryta kitame lange</h2>
+    <p style="color:var(--pilkas,#777); margin:0">Uždaryk šį langą ir tęsk darbą jau atidarytame.</p></div>`;
+  document.body.appendChild(d);
+}
+if ("BroadcastChannel" in window) {
+  const kanalas = new BroadcastChannel("uzp-langas");
+  let pagrindinis = false;
+  kanalas.onmessage = ev => {
+    if (ev.data === "ar-yra" && pagrindinis) kanalas.postMessage("yra");
+    else if (ev.data === "yra" && !pagrindinis) rodytiLangoBloka();
+  };
+  kanalas.postMessage("ar-yra");
+  setTimeout(() => { if (!_langoBlokas) pagrindinis = true; }, 500);
+}
+
+// ── Busena / startas ─────────────────────────────────────────────────────
+window._busenaGauta = fetch("/api/busena").then(r => r.json()).then(b => {
+  const dalys = [];
+  dalys.push(b.katalogas ? `katalogas: ${b.katalogas} kortelių` : "⚠ katalogo nėra");
+  dalys.push(`AI: ${b.ai_modelis}`);
+  if (!b.anthropic_raktas) dalys.push("⚠ nėra ANTHROPIC rakto");
+  $("#busenos-tekstas").textContent = dalys.join(" · ");
+
+  const mIdiegti = $("#idiegti");
+  if (mIdiegti) mIdiegti.onclick = async () => {
+    if (!idiegimoUzklausa) return;
+    idiegimoUzklausa.prompt();
+    await idiegimoUzklausa.userChoice;
+    idiegimoUzklausa = null;
+    mIdiegti.style.display = "none";
+  };
+
+  window._adminas = !!b.admin;
+  // VADYBININKO rezimas: mato TIK „pas vadybininka" saskaitas, raso pardavimo
+  // kaina prie eiluciu, o vietoje XML — „Perduoti apskaitai"
+  window._vadybininkas = !!b.vadybininkas;
+  window._vadybFolderis = b.folderis || "";
+  document.body.classList.toggle("vadybininkas", window._vadybininkas);
+  // UZDARYTA PROGRAMA = PRISIJUNGTI IS NAUJO (užsakovo taisykle): zyme gyvena tik
+  // lango gyvavimo laika — naujame lange jos nera, tad sesija numetama ir
+  // metama i prisijungima, net jei narsykle cookie dar issaugojusi.
+  let gyva = false;
+  try { gyva = sessionStorage.getItem("uzp_gyva") === "1"; } catch (_) { gyva = true; }
+  if (b.prisijungimas && b.vartotojas && !gyva) {
+    fetch("/api/atsijungti", { method: "POST" }).finally(() => location.href = "/login");
+    return;   // ekranas lieka pasleptas iki login puslapio
+  }
+  document.documentElement.style.visibility = "";   // patikra praeita — rodom
+  if (b.prisijungimas && b.vartotojas) {
+    const v = $("#vartotojo-blokas");
+    v.style.display = "";
+    v.textContent = "👤 " + b.vartotojas + " · ";
+    if (b.admin) {
+      const ad = document.createElement("a");
+      ad.href = "/admin"; ad.textContent = "paskyros"; ad.style.color = "inherit";
+      v.appendChild(ad);
+      v.appendChild(document.createTextNode(" · "));
+    }
+    const a = document.createElement("a");
+    a.href = "#"; a.textContent = "atsijungti"; a.style.color = "inherit";
+    a.onclick = async e => {
+      e.preventDefault();
+      await fetch("/api/atsijungti", { method: "POST" });
+      location.href = "/login";
+    };
+    v.appendChild(a);
+  }
+});
+
+// ── Darbuotoju folderiai + apdorotos saskaitos ───────────────────────────
+// Siuntėjų priskyrimai: „adresas → folderis". Būtina, kai įmonėje du to paties
+// vardo žmonės — pagal vardą adrese atspėti nebeįmanoma.
+async function issaugotiPriskyrima(adresas, folderis) {
+  try {
+    const r = await fetch("/api/pastas/priskyrimai", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adresas, folderis }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    await uzkrautiFolderius();  // blokas lieka atidarytas (_priskyrimaiAtidaryti)
+  } catch (e) { alert("Nepavyko išsaugoti: " + e.message); }
+}
+
+function piestiPriskyrimus(p, folderiai) {
+  const pr = p.priskyrimai || {};
+
+  const pasirinkimas = (dabartinis) => `<select class="pr-folderis" style="padding:4px 6px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit">
+      <option value="">— nepriskirta —</option>
+      ${folderiai.map(f => `<option value="${escapeHtml(f)}" ${f === dabartinis ? "selected" : ""}>${escapeHtml(f)}</option>`).join("")}
+    </select>`;
+
+  $("#priskyrimu-blokas").innerHTML = `
+    <div style="font-weight:600; margin-bottom:6px">Siuntėjų priskyrimai</div>
+    <div style="color:var(--pilkas); font-size:12px; margin-bottom:10px">
+      Iš kurio adreso ateinančios sąskaitos į kurį folderį dedamos. Be priskyrimo programa spėja pagal vardą adrese,
+      o kai įmonėje du to paties vardo žmonės — suklysta.
+    </div>
+    ${Object.keys(pr).length ? `<table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:12px">
+      ${Object.entries(pr).map(([a, f]) => `<tr data-adresas="${escapeHtml(a)}">
+        <td style="padding:4px 8px 4px 0">${escapeHtml(a)}</td>
+        <td style="padding:4px 8px 4px 0">→</td>
+        <td style="padding:4px 8px 4px 0">${pasirinkimas(f)}</td>
+        <td><button class="pr-salinti" data-adresas="${escapeHtml(a)}" title="Pašalinti priskyrimą"
+             style="background:none; border:none; cursor:pointer; color:var(--pilkas); font-size:15px">✕</button></td>
+      </tr>`).join("")}
+    </table>` : `<div style="color:var(--pilkas); font-size:12.5px; margin-bottom:12px">Priskyrimų dar nėra.</div>`}
+
+    <div id="pr-nauja-eilute" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <input id="pr-naujas-adresas" placeholder="vardas@imone.lt" style="padding:5px 8px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit; min-width:210px">
+      <span>→</span>
+      ${pasirinkimas("")}
+      <button class="mygtukas antras pasto-tikrinti" id="pr-prideti" style="margin-left:0">Pridėti</button>
+    </div>`;
+
+  // Pasirinkus folderį lentelėje — iškart išsaugoma. Tuščias pasirinkimas ar ✕
+  // ŠALINA priskyrimą — būtinas patvirtinimas (netyčia ištrynus, sąskaitos
+  // pradeda kristi į Nepriskirta ir AI jų neapdoroja).
+  const salinimoKlausimas = a => confirm(`Pašalinti priskyrimą ${a}?\nŠio siuntėjo sąskaitos kris į „Nepriskirta" ir AI jų automatiškai neapdoros.`);
+  $("#priskyrimu-blokas").querySelectorAll("tr .pr-folderis").forEach(s => {
+    s.onchange = () => {
+      const a = s.closest("tr").dataset.adresas;
+      if (!s.value && !salinimoKlausimas(a)) { piestiPriskyrimus(p, folderiai); return; }
+      issaugotiPriskyrima(a, s.value);
+    };
+  });
+  $("#priskyrimu-blokas").querySelectorAll(".pr-salinti").forEach(m => {
+    m.onclick = () => { if (salinimoKlausimas(m.dataset.adresas)) issaugotiPriskyrima(m.dataset.adresas, ""); };
+  });
+  $("#pr-prideti").onclick = () => {
+    const a = $("#pr-naujas-adresas").value.trim();
+    const f = $("#pr-nauja-eilute").querySelector(".pr-folderis").value;
+    if (!a || !f) { alert("Reikia ir adreso, ir folderio."); return; }
+    issaugotiPriskyrima(a, f);
+  };
+}
+
+async function uzkrautiFolderius() {
+  // Pirma karta — is keso akimirksniu, tinklas atnaujins po akimirkos
+  if (!window._folderiuKesoRodyta) {
+    window._folderiuKesoRodyta = true;
+    const k = isKeso("kesas_folderiai");
+    if (k && k.d) piestiFolderius(k.d, k.p || {});
+  }
+  try {
+    const [r, pr] = await Promise.all([fetch("/api/darbuotojai"), fetch("/api/pastas/busena")]);
+    const d = (await r.json()).darbuotojai || [];
+    const p = await pr.json();
+    iKesa("kesas_folderiai", { d, p });
+    piestiFolderius(d, p);
+  } catch (_) {}
+}
+
+function piestiFolderius(d, p) {
+  try {
+    // KIEKVIENA PASKYRA JUNGIA SAVO PASTA; laiskai skirstomi i projektu vadovu
+    // folderius pagal SIUNTEJA. Kitos paskyros pasto ir saskaitu nemato niekas.
+    const pb = $("#pasto-blokas");
+    if (p.paskyra) {
+      pb.innerHTML = `
+        <span class="pasto-badge">📧 ${escapeHtml(p.dezute || p.paskyra.email || p.paskyra.tiekejas)}</span>
+        ${p.dezute
+          ? `<span style="background:var(--zalia-fonas); color:var(--zalia); border-radius:99px; padding:2px 10px; font-weight:700; font-size:11.5px">bendra dėžutė</span>`
+          : ""}
+        ${p.klaida
+          ? `<span style="color:var(--raudona); font-weight:600">⚠ paštas nepasiekiamas — prisijunk iš naujo</span>
+             <div style="width:100%; color:var(--pilkas); font-size:12px; margin-top:4px">${escapeHtml(p.klaida)}</div>`
+          : `<span style="color:var(--pilkas)">${p.automatinis ? "tikrinamas automatiškai; laiškai" : "laiškai"} skirstomi į folderius pagal siuntėją</span>`}
+        ${window._adminas ? `<button class="mygtukas antras pasto-tikrinti" id="pasto-siuntejai">Siuntėjai</button>
+        <button class="mygtukas antras pasto-tikrinti" id="pasto-keisti" style="margin-left:0">Keisti paštą</button>` : ""}
+        <button class="mygtukas antras pasto-tikrinti" id="pasto-tikrinti" style="margin-left:0">Tikrinti dabar</button>
+        <div id="priskyrimu-blokas" style="display:none; width:100%; margin-top:10px; padding-top:10px; border-top:1px dashed var(--linija)"></div>
+        <div id="pasto-keitimas" style="display:none; width:100%; margin-top:10px; padding-top:10px; border-top:1px dashed var(--linija)">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+            <span>Prijungti kitą dėžutę:</span>
+            <a class="mygtukas antras pasto-tikrinti" style="text-decoration:none" href="/api/pastas/prisijungti?tiekejas=microsoft">Outlook</a>
+            <a class="mygtukas antras pasto-tikrinti" style="text-decoration:none" href="/api/pastas/prisijungti?tiekejas=google">Gmail</a>
+            <button class="mygtukas antras pasto-tikrinti" id="pasto-atjungti">Atjungti dabartinį</button>
+          </div>
+          <div style="color:var(--pilkas); font-size:12px; margin-top:6px">
+            Prisijungus kitą dėžutę, dabartinė pakeičiama — programa visada tikrina vieną apskaitos paštą.
+            Jau parsisiųstos sąskaitos lieka folderiuose.
+          </div>
+          <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--linija)">
+            <div style="font-weight:600; margin-bottom:4px">Bendra (share) dėžutė</div>
+            <div style="color:var(--pilkas); font-size:12px; margin-bottom:6px">
+              Jei sąskaitos ateina į įmonės bendrą dėžutę (pvz. saskaitos@imone.lt), įrašyk ją čia —
+              laiškai bus imami iš jos, o ne iš tavo asmeninės. Bendrai dėžutei nereikia nei licencijos,
+              nei atskiro slaptažodžio; užtenka, kad tau būtų duota prieiga prie jos.
+              Tuščias laukelis = imama tavo paties dėžutė.
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <input id="pasto-dezute" placeholder="saskaitos@imone.lt" value="${escapeHtml(p.dezute || "")}"
+                style="padding:5px 8px; border-radius:6px; border:1px solid var(--linija); background:var(--korta); color:inherit; min-width:220px">
+              <button class="mygtukas antras pasto-tikrinti" id="pasto-dezute-saugoti" style="margin-left:0">Išsaugoti</button>
+            </div>
+          </div>
+        </div>`;
+      if (window._adminas) {
+      $("#pasto-keisti").onclick = () => {
+        const k = $("#pasto-keitimas");
+        k.style.display = k.style.display === "none" ? "" : "none";
+      };
+      $("#pasto-dezute-saugoti").onclick = async () => {
+        const m = $("#pasto-dezute-saugoti");
+        m.disabled = true; m.textContent = "Saugoma…";
+        try {
+          const r = await fetch("/api/pastas/dezute", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ adresas: $("#pasto-dezute").value.trim() }),
+          });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.detail || r.statusText);
+          alert(j.dezute
+            ? `Laiškai bus imami iš ${j.dezute}.\n\nJei paštas mestų klaidą 403 — reiškia Azure dar neduotas leidimas Mail.Read.Shared arba tau nesuteikta prieiga prie tos dėžutės.`
+            : "Laiškai bus imami iš tavo paties dėžutės.");
+          uzkrautiFolderius();
+        } catch (e) { alert("Nepavyko išsaugoti: " + e.message); }
+        m.disabled = false; m.textContent = "Išsaugoti";
+      };
+      $("#pasto-siuntejai").onclick = () => {
+        window._priskyrimaiAtidaryti = !window._priskyrimaiAtidaryti;
+        const k = $("#priskyrimu-blokas");
+        k.style.display = window._priskyrimaiAtidaryti ? "" : "none";
+        if (window._priskyrimaiAtidaryti) piestiPriskyrimus(p, d.map(x => x.vardas));
+      };
+      // Po išsaugojimo sąrašas perpiešiamas — blokas turi likti atidarytas
+      if (window._priskyrimaiAtidaryti) {
+        $("#priskyrimu-blokas").style.display = "";
+        piestiPriskyrimus(p, d.map(x => x.vardas));
+      }
+      $("#pasto-atjungti").onclick = async () => {
+        if (!confirm("Atjungti apskaitos paštą?\nNaujos sąskaitos nebebus parsisiunčiamos, kol neprijungsi kito.")) return;
+        await fetch("/api/pastas/atjungti", { method: "POST" });
+        uzkrautiFolderius();
+      };
+      }   // window._adminas
+      $("#pasto-tikrinti").onclick = async () => {
+        const m = $("#pasto-tikrinti");
+        m.disabled = true; m.textContent = "Tikrinama…";
+        try {
+          const r = await fetch("/api/pastas/tikrinti", { method: "POST" });
+          const j = await r.json();
+          if (!r.ok) throw new Error(j.detail || r.statusText);
+          const eilutes = Object.entries(j.folderiai || {}).map(([f, failai]) => `📁 ${f}: ${failai.join(", ")}`);
+          alert(eilutes.length ? "Parsisiųsta:\n" + eilutes.join("\n") : "Naujų sąskaitų pašte nerasta" + (j.praleista ? ` (${j.praleista} jau buvo / ne PDF)` : ""));
+          uzkrautiFolderius();
+        } catch (e) { alert("Pašto klaida: " + e.message); }
+        m.disabled = false; m.textContent = "Tikrinti dabar";
+      };
+    } else {
+      const g = p.google_paruostas
+        ? `<a href="/api/pastas/prisijungti?tiekejas=google"><b>Prijungti Gmail</b></a>`
+        : `<a href="#" id="google-raktu-mygtukas">Gmail — įvesti raktus</a>`;
+      const m = p.microsoft_paruostas ? `<a href="/api/pastas/prisijungti?tiekejas=microsoft">Outlook</a>` : `<span style="color:var(--pilkas)">Outlook (nėra raktų)</span>`;
+      pb.innerHTML = `
+        <div style="width:100%">
+          <div style="display:flex; align-items:center; gap:10px">📧 <b>Apskaitos paštas</b> <span style="color:var(--pilkas)">(vienas visiems; laiškai skirstomi pagal siuntėją)</span> — ${g} · ${m}</div>
+          <div id="google-raktu-forma" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--linija)">
+            <details style="margin-bottom:10px; color:var(--pilkas); font-size:12.5px">
+              <summary style="cursor:pointer; font-weight:600; color:var(--tekstas)">📋 Kaip gauti raktus (5 min, vieną kartą)</summary>
+              <ol style="margin:8px 0 0 18px; line-height:1.7">
+                <li>Eik į <b>console.cloud.google.com</b> (prisijunk su apskaitos Gmail) → viršuje sukurk projektą (pvz. „Uzpajamavimas“).</li>
+                <li>Meniu <b>APIs & Services → Library</b> → surask <b>Gmail API</b> → <b>Enable</b>.</li>
+                <li><b>APIs & Services → OAuth consent screen</b> → External → Create; App name bet koks; išsaugok. Skiltyje <b>Audience → Test users</b> pridėk SAVO apskaitos Gmail adresą.</li>
+                <li><b>APIs & Services → Credentials → Create credentials → OAuth client ID</b> → tipas <b>Web application</b> → prie <b>Authorized redirect URIs</b> įklijuok: <code>http://localhost:8300/api/pastas/callback/google</code> → Create.</li>
+                <li>Nukopijuok <b>Client ID</b> ir <b>Client secret</b> į laukelius žemiau.</li>
+              </ol>
+            </details>
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <input id="g-client-id" placeholder="Client ID (…apps.googleusercontent.com)" style="flex:2; min-width:280px">
+              <input id="g-client-secret" placeholder="Client secret (GOCSPX-…)" style="flex:1; min-width:200px">
+              <button class="mygtukas" id="g-issaugoti">Išsaugoti ir jungtis</button>
+            </div>
+          </div>
+        </div>`;
+      const mygt = $("#google-raktu-mygtukas");
+      if (mygt) mygt.onclick = ev => {
+        ev.preventDefault();
+        const f = $("#google-raktu-forma");
+        f.style.display = f.style.display === "none" ? "" : "none";
+      };
+      const iss = $("#g-issaugoti");
+      if (iss) iss.onclick = async () => {
+        try {
+          const r = await fetch("/api/pastas/google-raktai", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ client_id: $("#g-client-id").value, client_secret: $("#g-client-secret").value }),
+          });
+          if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+          window.location = "/api/pastas/prisijungti?tiekejas=google";
+        } catch (e) { alert("Nepavyko: " + e.message); }
+      };
+    }
+
+    // SUSKLEISTI folderiai: tik statusas (kiek atsiusta / kiek neisrasyta).
+    // "Israsyta" = XML suformuotas ARBA dokumentas jau Pragmos DB (suvestas ranka).
+    // Viso folderio sarasas atsidaro paspaudus kortele.
+    window._folderiaiData = d;
+    // Vadybininkas mato TIK SAVO folderio kortelę — kitų folderių jam nėra
+    const rodomiFolderiai = window._vadybininkas && window._vadybFolderis
+      ? d.filter(f => f.vardas === window._vadybFolderis) : d;
+    $("#folderiu-tinklelis").innerHTML = rodomiFolderiai.map(f => {
+      // Apskaitai „pas vadybininką" failai neskaičiuojami kaip laukiantys —
+      // jie dar ne jos darbas (vadybininko folderio neapdoroti — irgi jo)
+      // Apskaitai egzistuoja TIK perduotos sąskaitos — kol vadybininkas
+      // nepaspaudė „Perduoti", jos apskaitos aplinkoje neegzistuoja (nei
+      // skaičiuose, nei sąrašuose); vadybininko folderio neapdoroti — irgi jo
+      const manoF = window._vadybininkas ? f.failai
+        : f.failai.filter(x => x.etapas !== "vadybininkas" && !(f.vadybininko && !x.apdorota));
+      const atsiusta = manoF.length;
+      // Būsenos kaip sąraše: laukia (+ dar neapdoroti) / išsiųsta / klaida / įkelta (archyvas)
+      const bus = manoF.filter(x => x.apdorota).map(saskaitosBusena);
+      const laukia = bus.filter(b => b === "laukia").length + manoF.filter(x => !x.apdorota).length;
+      const issiusta = bus.filter(b => b === "issiusta").length;
+      const importoKlaidu = bus.filter(b => b === "klaida").length;
+      const ikelta = bus.filter(b => b === "ikelta").length;
+      const vyksta = manoF.some(x => x.vyksta);
+      const klaidu = manoF.filter(x => x.klaida).length;
+      return `
+      <div class="folderis folderis-kortele" data-folderis="${escapeHtml(f.vardas)}" title="Atidaryti šio žmogaus sąskaitų sąrašą">
+        <div class="folderio-antraste">📁 ${escapeHtml(f.vardas)}<span class="kiekis">${atsiusta}</span>
+          ${window._adminas ? `<button class="folderio-trinti" data-vardas="${escapeHtml(f.vardas)}" title="Ištrinti folderį (tik adminas)">🗑</button>` : ""}</div>
+        <div class="folderio-statusas">
+          ${atsiusta === 0 ? `<span class="stat-pilka">tuščia — naujos sąskaitos atsiras čia</span>` : ""}
+          ${importoKlaidu ? `<span class="stat-klaida">🔴 ${importoKlaidu} klaida</span>` : ""}
+          ${laukia ? `<span class="stat-laukia">🟡 ${laukia} laukia</span>` : ""}
+          ${issiusta ? `<span class="stat-pilka">🔵 ${issiusta} išsiųsta</span>` : ""}
+          ${atsiusta && !laukia && !issiusta && !importoKlaidu ? `<span class="stat-gerai">viskas įkelta ✓</span>` : ""}
+          ${ikelta ? `<span class="stat-pilka" title="Įkeltos į Pragmą — archyve">🗄 ${ikelta}</span>` : ""}
+          ${vyksta ? `<span class="stat-vyksta">⏳ AI skaito…</span>` : ""}
+          ${klaidu ? `<span class="stat-klaida">⚠ ${klaidu} AI nepavyko</span>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+
+    document.querySelectorAll(".folderis-kortele").forEach(m => {
+      m.onclick = ev => {
+        if (ev.target.closest(".folderio-trinti")) return;
+        atidarytiFolderi(m.dataset.folderis);
+      };
+    });
+
+    document.querySelectorAll(".folderio-trinti").forEach(m => {
+      m.onclick = async (ev) => {
+        ev.stopPropagation();
+        const vardas = m.dataset.vardas;
+        if (!confirm(`Ištrinti folderį „${vardas}“?\nSVARBU: vardas siejasi su Pragmos serverio folderiu (C:\\Sąskaitos pajamavimui\\${vardas}) — į jį nebeeis XML failai.`)) return;
+        await trintiFolderi(vardas, false);
+      };
+    });
+
+    // Kol fone AI skaito sąskaitas — sąrašas atsinaujina pats (be F5)
+    const vyksta = d.some(f => f.failai.some(x => x.vyksta));
+    clearTimeout(window._folderiuLaikmatis);
+    if (vyksta && $("#ikelimo-ekranas").style.display !== "none") {
+      window._folderiuLaikmatis = setTimeout(() => { uzkrautiFolderius(); uzkrautiApdorotas(); }, 4000);
+    }
+    if (window._atidarytasFolderis) piestiFolderioModala();
+  } catch (_) {}
+}
+
+// ── Folderio langas: vieno žmogaus visos sąskaitos (laukiančios + išrašytos) ──
+function atidarytiFolderi(vardas) {
+  window._atidarytasFolderis = vardas;
+  let fonas = document.getElementById("folderio-modalas");
+  if (!fonas) {
+    fonas = document.createElement("div");
+    fonas.id = "folderio-modalas";
+    fonas.style.cssText = "position:fixed; inset:0; z-index:9990; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow:auto";
+    fonas.onclick = ev => { if (ev.target === fonas) uzdarytiFolderi(); };
+    document.body.appendChild(fonas);
+  }
+  piestiFolderioModala();
+}
+
+function uzdarytiFolderi() {
+  window._atidarytasFolderis = null;
+  const f = document.getElementById("folderio-modalas");
+  if (f) f.remove();
+}
+
+function piestiFolderioModala() {
+  const vardas = window._atidarytasFolderis;
+  const fonas = document.getElementById("folderio-modalas");
+  if (!vardas || !fonas) return;
+  const f = (window._folderiaiData || []).find(x => x.vardas === vardas) || { failai: [] };
+  const mano = localStorage.getItem("uzp_vardas") || "";
+  // Vadybininko folderio NEAPDOROTI failai apskaitai nerodomi (jie dar jo);
+  // apskaita nemato ir apdorotu, kurios dar „pas vadybininka"
+  const neapdoroti = (window._vadybininkas || !f.vadybininko) ? f.failai.filter(x => !x.apdorota) : [];
+  const visosF = (window._sarasas || []).filter(x => (x.saltinis || {}).darbuotojas === vardas);
+  // Vadybininkas ir folderio lange mato TIK savo (etapo) saskaitas
+  // Apskaitai: tik jos etapo sąskaitos IR ne archyvinės (įkeltos gyvena Archyve)
+  const sask = window._vadybininkas ? visosF.filter(x => x.etapas === "vadybininkas")
+    : visosF.filter(x => x.etapas !== "vadybininkas" && saskaitosBusena(x) !== "ikelta");
+  // Archyvas: vadybininkui — PERDUOTOS apskaitai; apskaitai — įkeltos į Pragmą
+  const archyve = window._vadybininkas ? visosF.filter(x => x.etapas !== "vadybininkas").length
+    : visosF.filter(x => x.etapas !== "vadybininkas" && saskaitosBusena(x) === "ikelta").length;
+  // Apskaitai folderio skaičius = tik jos (perduotos) sąskaitos + neapdoroti
+  const failuSk = window._vadybininkas ? f.failai.length
+    : f.failai.filter(x => x.etapas !== "vadybininkas" && !(f.vadybininko && !x.apdorota)).length;
+  // PAKETAI folderyje — kaip pagrindiniame sarase: vieno laisko saskaitos = viena 📦 eilute
+  const grupes = {};
+  sask.forEach(x => { if (x.paketas) (grupes[x.paketas] = grupes[x.paketas] || []).push(x); });
+  const rodomi = [];
+  const pan = new Set();
+  sask.forEach(x => {
+    // Vadybininkui grupuojami tik jo paties sudeti (rankiniai) paketai
+    if ((!window._vadybininkas || x.rankinis_paketas) && x.paketas && (grupes[x.paketas] || []).length > 1) {
+      if (pan.has(x.paketas)) return;
+      pan.add(x.paketas);
+      rodomi.push({ pak: x.paketas, grupe: grupes[x.paketas],
+                    xml_sugeneruota: grupes[x.paketas].every(y => y.xml_sugeneruota) });
+    } else rodomi.push(x);
+  });
+  rodomi.forEach(x => { x.busena = x.pak ? paketoBusena(x.grupe) : saskaitosBusena(x); });
+  const sekc = b => rodomi.filter(x => x.busena === b).sort((a, c) => ((a.data || "9999") < (c.data || "9999") ? -1 : 1));
+  const eil = x => x.pak ? paketoEiluteHTML(x.pak, x.grupe, mano) : apdorotosEiluteHTML(x, mano);
+  const sekcija = (b, pavad) => { const d = sekc(b); return d.length ? `<div class="grupes-antraste">${pavad} <span class="kiek">${d.length}</span></div>${d.map(eil).join("")}` : ""; };
+  fonas.innerHTML = `<div style="background:var(--fonas,#fff); color:inherit; border-radius:14px; padding:18px 20px; width:min(1040px,96vw); min-height:200px">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap">
+      <b style="font-size:16px">📁 ${escapeHtml(vardas)}</b>
+      <span style="color:var(--pilkas); font-size:12.5px">${failuSk} atsiųsta</span>
+      ${archyve ? `<button class="mygtukas antras maza" id="folderio-archyvas" style="margin:0" title="${window._vadybininkas ? "Apskaitai perduotos šio folderio sąskaitos" : "Įkeltos į Pragmą — šio folderio archyvas"}">🗄 ${window._vadybininkas ? "perduotos" : "archyvas"} ${archyve}</button>` : ""}
+      <button class="mygtukas antras" style="margin-left:auto" id="folderio-uzdaryti">Uždaryti</button>
+    </div>
+    ${neapdoroti.length ? `<div class="grupes-antraste">Dar neapdorota AI <span class="kiek">${neapdoroti.length}</span></div>
+      <div style="margin-bottom:12px">${neapdoroti.map(x => `
+        <button class="folderio-failas fm-failas" style="border:1px solid var(--linija); border-radius:10px; margin-bottom:6px; background:var(--korta)" data-failas="${escapeHtml(x.pavadinimas)}">
+          ${x.vyksta ? "⏳" : "📄"} <span>${escapeHtml(x.pavadinimas)}</span>
+          ${x.vyksta ? `<span class="failo-zyme vyksta">AI skaito…</span>` : x.klaida ? `<span class="failo-zyme klaida" title="${escapeHtml(x.klaida)}">⚠ nepavyko</span>` : ""}
+          <span class="dydis">${x.dydis_kb} KB</span>
+          <span class="failo-trinti fm-trinti" data-failas="${escapeHtml(x.pavadinimas)}" title="Ištrinti sąskaitą">🗑</span>
+        </button>`).join("")}</div>` : ""}
+    ${sekcija("klaida", "🔴 Klaidos ir dublikatai — reikia veiksmo")}
+    ${sekcija("laukia", "🟡 Laukia išrašymo")}
+    ${sekcija("issiusta", "🔵 Išsiųsta — laukia Pragmos")}
+    ${sekcija("ikelta", "🟢 Įkelta į Pragmą")}
+    ${!neapdoroti.length && !sask.length ? `<div class="folderis-tuscias">${archyve ? (window._vadybininkas ? "Viskas perduota apskaitai — sąskaitos guli sąraše „Perduotos apskaitai“" : "Viskas įkelta — sąskaitos guli archyve") : "Tuščia — naujos sąskaitos atsiras čia"}</div>` : ""}
+  </div>`;
+  $("#folderio-uzdaryti").onclick = uzdarytiFolderi;
+  const fa = $("#folderio-archyvas");
+  if (fa) fa.onclick = () => { uzdarytiFolderi(); atidarytiArchyva(vardas); };
+  fonas.querySelectorAll(".apdorota-eilute").forEach(m => {
+    m.onclick = () => {
+      if (m.dataset.paketas) { uzdarytiFolderi(); atidarytiPaketa(m.dataset.paketas); return; }
+      const x = sask.find(y => y.id === m.dataset.id);
+      uzdarytiFolderi();
+      if (x && x.paketas && (window._paketai[x.paketas] || []).length > 1) atidarytiPaketa(x.paketas);
+      else atidarytiIssaugota(m.dataset.id);
+    };
+  });
+  // Paketavimo varneles gyvena tik pagrindiniame sarase — modale ju nereikia
+  fonas.querySelectorAll(".pak-varne").forEach(c => c.remove());
+  fonas.querySelectorAll(".apdorota-trinti").forEach(m => {
+    m.onclick = ev => {
+      ev.stopPropagation();
+      m.dataset.atsieti ? atsietiPaketa(m.dataset.atsieti)
+        : m.dataset.trintiPaketa ? trintiVisaPaketa(m.dataset.trintiPaketa)
+        : trintiApdorotaSaskaita(m.dataset.trinti);
+    };
+  });
+  fonas.querySelectorAll(".fm-failas").forEach(m => {
+    m.onclick = ev => {
+      if (ev.target.closest(".fm-trinti")) return;
+      uzdarytiFolderi();
+      apdorotiIsFolderio(vardas, m.dataset.failas);
+    };
+  });
+  fonas.querySelectorAll(".fm-trinti").forEach(m => {
+    m.onclick = async ev => {
+      ev.stopPropagation();
+      if (!confirm(`Ištrinti sąskaitą „${m.dataset.failas}“ VISIŠKAI?\nDings failas ir jo apdorojimas (parinkimai, redagavimai).\nJei ta pati sąskaita vėl ateis paštu — bus parsisiųsta iš naujo.`)) return;
+      try {
+        const r = await fetch("/api/darbuotojo-failas/trinti", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ darbuotojas: vardas, failas: m.dataset.failas }),
+        });
+        if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+        uzkrautiFolderius(); uzkrautiApdorotas();
+      } catch (e) { alert("Nepavyko ištrinti: " + e.message); }
+    };
+  });
+}
+
+async function trintiFolderi(vardas, suFailais) {
+  try {
+    const r = await fetch("/api/darbuotojo-folderis/trinti", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vardas, trinti_su_failais: suFailais }),
+    });
+    const j = await r.json();
+    if (r.status === 409) {
+      // Folderyje yra failu — antras patvirtinimas
+      if (confirm(`${j.detail}\n\nIštrinti KARTU su failais? Sąskaitų PDF dings negrįžtamai.`)) {
+        return trintiFolderi(vardas, true);
+      }
+      return;
+    }
+    if (!r.ok) throw new Error(j.detail || r.statusText);
+    uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko ištrinti: " + e.message); }
+}
+
+document.getElementById("naujas-folderis").onclick = async () => {
+  const vardas = prompt("Naujo projektų vadovo folderio vardas:\n(pagal jį skirstomi laiškai ir Pragmos serveryje agentas deda XML į C:\\Sąskaitos pajamavimui\\<vardas>)");
+  if (!vardas || !vardas.trim()) return;
+  try {
+    const r = await fetch("/api/darbuotojo-folderis", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vardas: vardas.trim() }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || r.statusText);
+    uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko sukurti: " + e.message); }
+};
+
+async function uzkrautiApdorotas() {
+  // Pirma karta — is keso akimirksniu, tinklas atnaujins fone
+  if (!window._apdorotuKesoRodyta) {
+    window._apdorotuKesoRodyta = true;
+    const k = isKeso("kesas_apdorotos");
+    if (k) piestiApdorotas(k);
+  }
+  try {
+    const r = await fetch("/api/saskaitos");
+    const s = (await r.json()).saskaitos || [];
+    iKesa("kesas_apdorotos", s);
+    piestiApdorotas(s);
+  } catch (_) {}
+}
+
+// PAKETO eilute (📦 vieno laisko saskaitos) — ta pati pagrindiniame sarase
+// ir folderio lange
+function paketoEiluteHTML(pak, g, mano) {
+  const xmlKiek = g.filter(y => y.xml_sugeneruota).length;
+  const suma = g.reduce((a, b) => a + (+b.suma_be_pvm || 0), 0);
+  const tiekejai = [...new Set(g.map(y => y.tiekejas))];
+  const pavad = g[0].paketo_tema || (tiekejai[0] + (tiekejai.length > 1 ? " ir kt." : ""));
+  const uzimta = g.some(y => y.tvarko && y.tvarko !== mano);
+  return `
+        <button class="apdorota-eilute" data-paketas="${pak}">
+          <b>📦 ${escapeHtml(pavad)}</b>
+          <span class="pilka">${g.length} sąsk.${g[0].priedu ? " + 📎 pasiūlymas" : ""}</span>
+          <span>${suma.toFixed(2)} € be PVM</span>
+          <span class="pilka">${g[0].saltinis && g[0].saltinis.darbuotojas ? "📁 " + escapeHtml(g[0].saltinis.darbuotojas) : ""}</span>
+          ${uzimta ? `<span class="tvarko-zyme">tvarko kolegė</span>` : ""}
+          ${busenosZymeIs(paketoBusena(g), null)}${xmlKiek && xmlKiek < g.length ? `<span class="pilka">${xmlKiek}/${g.length}</span>` : ""}
+          ${window._vadybininkas ? `<span class="apdorota-trinti" data-atsieti="${pak}" title="Išardyti paketą — sąskaitos atsiskiria, niekas netrinama">⛓</span>` : ""}
+          <span class="apdorota-trinti" data-trinti-paketa="${pak}" title="Ištrinti VISĄ paketą (visas jo sąskaitas su failais)">🗑</span>
+        </button>`;
+}
+
+// VADYBININKO paketavimas: varnelemis pazymetos saskaitos sudedamos i viena
+// 📦 paketa (apskaita matys kaip viena eilute); ⛓ isardo (niekas netrinama)
+window._paketoZymos = window._paketoZymos || new Set();
+
+function atnaujintiPaketoMygtuka() {
+  const m = $("#paketo-mygtukas");
+  if (!m) return;
+  const n = window._paketoZymos.size;
+  m.style.display = window._vadybininkas && n >= 2 ? "" : "none";
+  m.textContent = `📦 Sujungti į paketą (${n})`;
+}
+
+function pririsPaketoVarneles(kont) {
+  kont.querySelectorAll(".pak-varne").forEach(c => {
+    c.onclick = ev => ev.stopPropagation();
+    c.onchange = () => {
+      c.checked ? window._paketoZymos.add(c.dataset.pakid) : window._paketoZymos.delete(c.dataset.pakid);
+      atnaujintiPaketoMygtuka();
+    };
+  });
+}
+
+document.getElementById("paketo-mygtukas").onclick = async () => {
+  const ids = [...window._paketoZymos];
+  if (ids.length < 2) return;
+  const pavadinimas = prompt(`Sujungti ${ids.length} sąskaitas į vieną paketą.\nPaketo pavadinimas (galima palikti tuščią):`, "");
+  if (pavadinimas === null) return;
+  try {
+    const r = await fetch("/api/saskaita/paketas", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids, pavadinimas: pavadinimas.trim() }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    window._paketoZymos.clear();
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko sujungti: " + e.message); }
+};
+
+async function atsietiPaketa(pak) {
+  if (!confirm("Išardyti paketą?\nSąskaitos liks — tik nebebus rodomos kartu kaip vienas paketas.")) return;
+  try {
+    const r = await fetch("/api/saskaita/paketas", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isardyti: pak }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko išardyti: " + e.message); }
+}
+
+// Trynimo veiksmai — bendri pagrindiniam sarasui ir folderio langui
+async function trintiVisaPaketa(pak) {
+  const g = (window._paketai || {})[pak] || [];
+  if (!g.length) return;
+  if (!confirm(`Ištrinti VISĄ paketą (${g.length} sąsk.) VISIŠKAI?\nDings įrašai IR failai folderyje. Persiuntus laišką iš naujo — viskas įsikels švariai.`)) return;
+  try {
+    for (const x of g) {
+      const salt = x.saltinis || {};
+      const r = salt.darbuotojas && salt.failas
+        ? await fetch("/api/darbuotojo-failas/trinti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ darbuotojas: salt.darbuotojas, failas: salt.failas }) })
+        : await fetch("/api/saskaita/trinti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: x.id }) });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    }
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko ištrinti: " + e.message); }
+}
+
+async function trintiApdorotaSaskaita(id) {
+  if (!confirm("Ištrinti šią apdorotą sąskaitą?\nRedagavimai ir parinkimai dings. Failas darbuotojo folderyje lieka — paspaudus jį, AI apdoros iš naujo.")) return;
+  try {
+    const r = await fetch("/api/saskaita/trinti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko ištrinti: " + e.message); }
+}
+
+// Viena apdorotos saskaitos eilute — ta pati pagrindiniame sarase ir folderio lange
+function apdorotosEiluteHTML(x, mano) {
+  // Vadybininko varnele — SALIA eilutes mygtuko (ne viduje: mygtukas
+  // praryja paspaudimus ir varnele nepasizymetu)
+  const varne = window._vadybininkas
+    ? `<input type="checkbox" class="pak-varne" data-pakid="${x.id}" title="Pažymėti sujungimui į paketą" ${window._paketoZymos && window._paketoZymos.has(x.id) ? "checked" : ""}>`
+    : "";
+  const eilute = `
+      <button class="apdorota-eilute" data-id="${x.id}">
+        <b>${escapeHtml(x.tiekejas)}</b>
+        <span class="nr">${escapeHtml(x.numeris)}</span>
+        <span class="pilka">${escapeHtml(x.data)}</span>
+        <span>${(+x.suma_be_pvm).toFixed(2)} € be PVM · ${x.eiluciu} eil.</span>
+        <span class="pilka">${x.saltinis && x.saltinis.darbuotojas ? "📁 " + escapeHtml(x.saltinis.darbuotojas) : "įkelta"}</span>
+        ${x.papildyta ? `<span class="tvarko-zyme" title="Atėjo papildyta informacija (laiško tekstas / priedai)">❗</span>` : ""}
+        ${window._vadybininkas && x.etapas !== "vadybininkas" ? `<span class="xml-zyme" title="Sąskaita perduota apskaitai — ją mato apskaitininkės">perduota ✓</span>` : ""}
+        ${x.tvarko && x.tvarko !== mano ? `<span class="tvarko-zyme">tvarko kolegė</span>` : ""}
+        ${!x.xml_sugeneruota && x.pragmoje ? `<span class="tvarko-zyme" title="Dokumentas JAU YRA Pragmos bazėje ${escapeHtml(x.pragmoje_db || "tikroje bazėje")} (${pragmosBusena(x.pragmoje)}), nors XML čia neformuotas — greičiausiai suvestas ranka. Formuojant XML į tą pačią bazę gautųsi dvigubas suvedimas!">jau Pragmoje ⚠</span>` : ""}
+        ${busenosZyme(x)}
+        <span class="apdorota-trinti" data-trinti="${x.id}" title="Ištrinti apdorotą sąskaitą">🗑</span>
+      </button>`;
+  return varne ? `<div class="pak-eilute">${varne}${eilute}</div>` : eilute;
+}
+
+// ── VIENA BUSENA saskaitai (vietoj sesiu zymiu): laukia / issiusta / ikelta / klaida ──
+// ikelta = Pragmos importas patvirtino (arba XML + jau Pragmos DB pagal senaji kelia);
+// issiusta = XML suformuotas, Pragmos atsakymo dar nera; klaida = atmesta/dublikatas
+// BANDYMŲ bazė (BANDYMAI_*): įkėlimas į ją NĖRA baigtas darbas — sąskaita lieka
+// darbo sąraše, kol nukeliama į TIKRĄ bazę (užsakovo taisyklė 09-07)
+function bandomojiBaze(db) { return /^BANDYMAI[_-]/i.test(String(db || "")); }
+function saskaitosBusena(x) {
+  const pi = x.pragmos_importas, pp = x.pragmos_pardavimo_importas;
+  if (pi && (pi.busena === "klaida" || pi.busena === "dublikatas")) return "klaida";
+  if (pp && (pp.busena === "klaida" || pp.busena === "dublikatas")) return "klaida";
+  const pirkimasIkeltas = (pi && pi.busena === "ikelta" && !bandomojiBaze(pi.duombaze))
+    || (x.xml_sugeneruota && x.pragmoje && !bandomojiBaze(x.pragmoje_db));
+  // ATSKIRAS pardavimas (Document-Sale): baigta tik kai IR jis Pragmoje;
+  // "laukia" (truksta pirkimo) — ne klaida, tebelaukiam
+  const pardavimoLaukiam = !!x.uzsakymo_nr && !(pp && pp.busena === "ikelta" && !bandomojiBaze(pp.duombaze));
+  if (pirkimasIkeltas && !pardavimoLaukiam) return "ikelta";
+  if (x.xml_sugeneruota) return "issiusta";
+  return "laukia";
+}
+function paketoBusena(g) {
+  const b = g.map(saskaitosBusena);
+  if (b.includes("klaida")) return "klaida";
+  if (b.every(x => x === "ikelta")) return "ikelta";
+  if (b.includes("laukia")) return "laukia";
+  return "issiusta";
+}
+function busenosZymeIs(b, pi, pp) {
+  pi = pi || {}; pp = pp || {};
+  if (b === "klaida") {
+    if (pi.busena === "dublikatas")
+      return `<span class="bz bz-klaida" title="Pragma atmetė kaip dublikatą — jau buvo įvesta (ID ${pi.sutapo_su_id || "?"}). Iš naujo nesiųsti.">🔴 dublikatas</span>`;
+    if (pi.busena === "klaida")
+      return `<span class="bz bz-klaida" title="${escapeHtml(pi.priezastis || "importo klaida — pataisyk ir formuok XML iš naujo")}">🔴 klaida</span>`;
+    // pardavimo (atskiro XML) klaida — pirkimas pats gali buti ir ikeltas
+    if (pp.busena === "dublikatas")
+      return `<span class="bz bz-klaida" title="Pragma atmetė PARDAVIMĄ kaip dublikatą — toks užsakymas jau įkeltas (ID ${pp.sutapo_su_id || "?"}${pp.pardavimo_numeris ? ", " + escapeHtml(pp.pardavimo_numeris) : ""}). Iš naujo nesiųsti.">🔴 pardavimas dubl.</span>`;
+    return `<span class="bz bz-klaida" title="Pardavimo importo klaida: ${escapeHtml(pp.priezastis || "be priežasties")}">🔴 pardavimo klaida</span>`;
+  }
+  const tkl = pp.pardavimo_numeris || pi.pardavimo_numeris;
+  if (b === "ikelta") return `<span class="bz bz-ikelta" title="Įkelta į Pragmą${pi.pragmos_id ? " (ID " + pi.pragmos_id + ")" : ""}${tkl ? ", pardavimas " + escapeHtml(tkl) : ""}">🟢 įkelta${pi.pragmos_id ? " · " + pi.pragmos_id : ""}${tkl ? " · " + escapeHtml(tkl) : ""}</span>`;
+  if (b === "issiusta") {
+    if (pi.busena === "ikelta" && bandomojiBaze(pi.duombaze))
+      return `<span class="bz bz-issiusta" title="Įkelta į BANDYMŲ bazę ${escapeHtml(pi.duombaze || "")} (ID ${pi.pragmos_id || "?"}) — į tikrą bazę dar nekelta: pakeisk duombazę Pragma juostoje ir formuok XML iš naujo">🧪 bandymuose${pi.pragmos_id ? " · " + pi.pragmos_id : ""}</span>`;
+    if (pp.busena === "laukia")
+      return `<span class="bz bz-issiusta" title="Pardavimas Pragmoje laukia: ${escapeHtml(pp.priezastis || "laukiama pirkimo")} — įsikels, kai pirkimas bus Pragmoje">🔵 pardavimas laukia pirkimo</span>`;
+    if (pi.busena === "ikelta")
+      return `<span class="bz bz-issiusta" title="Pirkimas įkeltas (ID ${pi.pragmos_id || "?"}) — laukiama pardavimo importo rezultato">🔵 pirkimas įkeltas · laukia pardavimo</span>`;
+    return `<span class="bz bz-issiusta" title="XML suformuotas — laukiama Pragmos importo rezultato">🔵 išsiųsta</span>`;
+  }
+  return `<span class="bz bz-laukia" title="Reikia apskaitininkės: parinkti korteles ir formuoti XML">🟡 laukia</span>`;
+}
+function busenosZyme(x) { return busenosZymeIs(saskaitosBusena(x), x.pragmos_importas, x.pragmos_pardavimo_importas); }
+
+// ── FILTRAI darbo sarasui (tekstas, sąskaitos datos, folderis, būsena, mano) ──
+window._filtrai = window._filtrai || {};
+function atitinkaFiltrus(x) {
+  const f = window._filtrai;
+  if (f.tekstas) {
+    const t = f.tekstas.toLowerCase(), pi = x.pragmos_importas || {}, pp = x.pragmos_pardavimo_importas || {};
+    const laukas = [x.tiekejas, x.numeris, pi.pragmos_id, pi.pardavimo_numeris, pp.pardavimo_numeris, x.uzsakymo_nr, x.paketo_tema, (x.saltinis || {}).darbuotojas]
+      .map(v => String(v || "").toLowerCase()).join(" ");
+    if (!laukas.includes(t)) return false;
+  }
+  if (f.nuo && (x.data || "") < f.nuo) return false;
+  if (f.iki && (x.data || "") > f.iki) return false;
+  if (f.folderis && (x.saltinis || {}).darbuotojas !== f.folderis) return false;
+  if (f.busena && saskaitosBusena(x) !== f.busena) return false;
+  if (f.mano && x.tvarko !== (localStorage.getItem("uzp_vardas") || "")) return false;
+  return true;
+}
+function atnaujintiFiltruValdiklius(visi) {
+  const fs = $("#f-folderis");
+  if (fs) {
+    const dabartinis = fs.value;
+    const fold = [...new Set(visi.map(x => (x.saltinis || {}).darbuotojas).filter(Boolean))].sort();
+    fs.innerHTML = `<option value="">visi folderiai</option>` + fold.map(f => `<option value="${escapeHtml(f)}" ${f === dabartinis ? "selected" : ""}>${escapeHtml(f)}</option>`).join("");
+  }
+  const rk = $("#f-rikiavimas");
+  if (rk) rk.textContent = (localStorage.getItem("uzp_rikiavimas") || "senos") === "senos" ? "⬆ seniausios viršuje" : "⬇ naujausios viršuje";
+  const am = $("#archyvo-mygtukas");
+  if (am) {
+    // Vadybininkui archyvas = PERDUOTOS apskaitai (mato būseną, gali atsiimti)
+    am.title = window._vadybininkas ? "Apskaitai perduotos sąskaitos — darbo sąraše jų nebėra" : "Į Pragmą įkeltos sąskaitos — darbo sąraše jų nebėra";
+    am.firstChild.textContent = window._vadybininkas ? "🗄 Perduotos apskaitai " : "🗄 Archyvas ";
+    $("#archyvo-kiek").textContent = (window._archyvas || []).length ? `(${window._archyvas.length})` : "";
+  }
+}
+["f-tekstas", "f-nuo", "f-iki", "f-folderis", "f-busena", "f-mano"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.oninput = el.onchange = () => {
+    window._filtrai = { tekstas: $("#f-tekstas").value.trim(), nuo: $("#f-nuo").value, iki: $("#f-iki").value,
+      folderis: $("#f-folderis").value, busena: $("#f-busena").value, mano: $("#f-mano").checked };
+    piestiApdorotas(window._sarasas || []);
+  };
+});
+document.getElementById("f-rikiavimas").onclick = () => {
+  localStorage.setItem("uzp_rikiavimas", (localStorage.getItem("uzp_rikiavimas") || "senos") === "senos" ? "naujos" : "senos");
+  piestiApdorotas(window._sarasas || []);
+};
+document.getElementById("archyvo-mygtukas").onclick = () => atidarytiArchyva("");
+
+// ── ARCHYVAS: įkeltos į Pragmą — su paieška (tiekėjas, numeris, ID, TKL), mėnesių grupės ──
+function atidarytiArchyva(folderis) {
+  const visi = (window._archyvas || []).filter(x => !folderis || (x.saltinis || {}).darbuotojas === folderis);
+  let fonas = document.getElementById("archyvo-modalas");
+  if (!fonas) {
+    fonas = document.createElement("div");
+    fonas.id = "archyvo-modalas";
+    fonas.style.cssText = "position:fixed; inset:0; z-index:9991; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:30px 16px; overflow:auto";
+    fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+    document.body.appendChild(fonas);
+  }
+  let tekstas = "";
+  const piesti = () => {
+    const tl = tekstas.toLowerCase();
+    const sar = visi.filter(x => {
+      const pi = x.pragmos_importas || {};
+      return !tl || [x.tiekejas, x.numeris, pi.pragmos_id, pi.pardavimo_numeris, (x.saltinis || {}).darbuotojas]
+        .map(v => String(v || "").toLowerCase()).join(" ").includes(tl);
+    }).sort((a, b) => (a.data || "") < (b.data || "") ? 1 : (a.data || "") > (b.data || "") ? -1 : 0);
+    let html = "", men = null;
+    sar.forEach(x => {
+      const m = (x.data || "").slice(0, 7) || "be datos";
+      if (m !== men) { men = m; html += `<div class="grupes-antraste">${escapeHtml(m)} <span class="kiek">${sar.filter(y => ((y.data || "").slice(0, 7) || "be datos") === m).length}</span></div>`; }
+      html += apdorotosEiluteHTML(x, "");
+    });
+    fonas.innerHTML = `<div style="background:var(--fonas,#fff); color:inherit; border-radius:14px; padding:18px 20px; width:min(1040px,96vw); min-height:200px">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap">
+        <b style="font-size:16px">🗄 ${window._vadybininkas ? "Perduotos apskaitai" : "Archyvas — įkelta į Pragmą"}${folderis ? " · 📁 " + escapeHtml(folderis) : ""}</b>
+        <span style="color:var(--pilkas); font-size:12.5px">${visi.length} sąsk.</span>
+        <input id="arch-tekstas" placeholder="🔍 tiekėjas, numeris, Pragmos ID, TKL…" value="${escapeHtml(tekstas)}"
+          style="flex:1; min-width:220px; padding:6px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit">
+        <button class="mygtukas antras" id="archyvo-uzdaryti" style="margin:0">Uždaryti</button>
+      </div>
+      ${html || `<div class="folderis-tuscias">Archyve nieko nėra</div>`}
+    </div>`;
+    fonas.querySelector("#archyvo-uzdaryti").onclick = () => fonas.remove();
+    const inp = fonas.querySelector("#arch-tekstas");
+    inp.oninput = () => { tekstas = inp.value; const pos = inp.selectionStart; piesti(); const n = fonas.querySelector("#arch-tekstas"); n.focus(); n.setSelectionRange(pos, pos); };
+    fonas.querySelectorAll(".pak-varne").forEach(c => c.remove());
+    fonas.querySelectorAll(".apdorota-eilute").forEach(m => { m.onclick = () => { fonas.remove(); atidarytiIssaugota(m.dataset.id); }; });
+    fonas.querySelectorAll(".apdorota-trinti").forEach(m => { m.onclick = ev => { ev.stopPropagation(); trintiApdorotaSaskaita(m.dataset.trinti); }; });
+  };
+  piesti();
+}
+
+// Pragmos importo GALUTINE busena (is agento importo-rezultato)
+function pragmosImportoZyme(pi) {
+  if (!pi || !pi.busena) return "";
+  if (pi.busena === "ikelta")
+    return `<span class="pragma-zyme" title="Pragmos importas įkėlė (ID ${pi.pragmos_id || "?"}, ${escapeHtml(pi.duombaze || "")})">įkelta ✓${pi.pragmos_id ? " " + pi.pragmos_id : ""}</span>`;
+  if (pi.busena === "dublikatas")
+    return `<span class="tvarko-zyme" title="Pragma atmetė kaip dublikatą (sutapo su ID ${pi.sutapo_su_id || "?"})">dublikatas ⚠</span>`;
+  return `<span class="tvarko-zyme" title="${escapeHtml(pi.priezastis || "importo klaida")}">importo klaida ⚠</span>`;
+}
+
+// PARDAVIMO SRAUTAS: ar si saskaita eina per vadybininka (pirkimas + musu
+// pardavimas). Apskaitai tokioms rodomi ir REDAGUOJAMI pardavimo laukai;
+// paprastoms apskaitos saskaitoms — ne (kad neapkrauti UI).
+function pardavimoSrautas() {
+  if (!B) return false;
+  if (window._vadybininkas) return true;
+  const p = (B.saskaita || {}).pardavimas || {};
+  const fold = (B.saltinis || {}).darbuotojas || "";
+  const vadF = (window._folderiaiData || []).some(f => f.vardas === fold && f.vadybininko);
+  return !!(B.perdave || p.pirkejas || vadF || (B.eilutes || []).some(e => e.pardavimo_be_pvm != null));
+}
+
+// ── PARDAVIMO BLOKAS: pirkejas / projektas / tipas / datos (vadybininkui ir
+// apskaitai) ── Reiksmes TIK is Pragmos konteksto sarasu (pirkejo nera sarase =
+// jo nera Pragmoje -> XML bus sustabdytas). Saugoma saskaita.pardavimas.
+async function uzkrautiPardavimoBloka() {
+  const blokas = $("#pardavimo-blokas");
+  if (!blokas || !B) return;
+  // Sarasai — TOS bazes, i kuria keliamas pirkimas (apskaitininkes pasirinkimas
+  // Pragma juostoje; vadybininkui — numatytoji). Kesas pagal baze.
+  const db = ((efektyviPragma() || B.saskaita.pragma || {}).duombaze || "").trim();
+  if (!window._pardavimoSarasai || window._pardavimoSarasai.db !== db) {
+    try {
+      const r = await fetch(`/api/pragma/pardavimo-sarasai?folderis=${encodeURIComponent((B.saltinis || {}).darbuotojas || "")}&duombaze=${encodeURIComponent(db)}`);
+      if (!r.ok) throw new Error(r.statusText);
+      window._pardavimoSarasai = { ...(await r.json()), db };
+    } catch (_) { window._pardavimoSarasai = { db, pirkejai: [], projektai: [], pardavimo_tipai: [], numatytas_tipas: "", sava_imone: "" }; }
+    if (!B || !document.contains(blokas)) return;   // langas spejo persipiesti
+  }
+  const s = window._pardavimoSarasai;
+  // VADYBININKO duombazes pasirinkimas (tas pats laukas saskaita.pragma.duombaze,
+  // kuri mato ir apskaita savo Pragma juostoje) — pakeitus, sarasai persikrauna
+  const dbSel = blokas.querySelector("[data-pd-db]");
+  if (dbSel && (s.duombazes || []).length) {
+    const dabar = s.duombaze || db;
+    dbSel.innerHTML = s.duombazes
+      .filter(d => !d.bandomoji || window._adminas || s.bandymu_rezimas || d.duombaze === dabar)
+      .map(d => `<option value="${escapeHtml(d.duombaze)}" ${d.duombaze === dabar ? "selected" : ""}>${escapeHtml(d.duombaze)}${d.bandomoji ? " (bandymams)" : ""}</option>`).join("");
+    dbSel.onchange = () => {
+      B.saskaita.pragma = { ...(B.saskaita.pragma || {}), duombaze: dbSel.value };
+      pazymetiKeitima(); uzkrautiPardavimoBloka();
+    };
+  }
+  if (!s.pirkejai.length) {
+    blokas.querySelectorAll("label:not(:has([data-pd-db]))").forEach(l => l.hidden = true);
+    const zin = document.createElement("span");
+    zin.style.cssText = "color:var(--pilkas); font-size:12px";
+    zin.textContent = `— Pragmos pirkėjų sąrašas${db ? " bazei " + db : ""} dar neatėjo, parinkti negalima`;
+    blokas.querySelector("b").after(zin);
+    return;
+  }
+  const p = B.saskaita.pardavimas = B.saskaita.pardavimas || {};
+  // PASKUTINIAI sio vartotojo pasirinkimai sioje bazeje (Pragmos agentas nr.32): nauja,
+  // dar neuzpildyta saskaita atsidaro su paskutiniu pirkeju / projektu / tipu
+  const pk = s.paskutiniai || {};
+  const nauja = !B.xml_sugeneruota && (window._vadybininkas ? B.etapas === "vadybininkas" : true);
+  let isPaskutiniu = false;
+  if (nauja && !p.pirkejas && !p.projektas && pk.pirkejas) {
+    p.pirkejas = pk.pirkejas;
+    if (pk.projektas) p.projektas = pk.projektas;
+    isPaskutiniu = true;
+  }
+  // tipas, kurio sioje bazeje nera (pakeitus baze) -> paskutinis / numatytas
+  if (p.tipas && s.pardavimo_tipai.length && !s.pardavimo_tipai.includes(p.tipas)) p.tipas = "";
+  if (!p.tipas) p.tipas = (nauja && pk.pardavimo_tipas) || s.numatytas_tipas || "";
+  if (isPaskutiniu) pazymetiKeitima();
+  if (!p.data) p.data = new Date().toISOString().slice(0, 10);
+  // Pastaba Pragmai uzsipildo sablonu (sava imone + sutartis), vadybininkas pataiso
+  if (!p.pastaba) {
+    const sab = [s.sava_imone || "", B.saskaita.pardavimo_sutartis ? "sutartis " + B.saskaita.pardavimo_sutartis : ""].filter(Boolean).join(", ");
+    if (sab) p.pastaba = sab;
+  }
+  // PIRKEJAI su apmokejimo terminu (Pragmos agentas nr.29: Firmos.ApmTerminas) —
+  // pasirinkus pirkeja „Apmoketi iki" = Data + terminas (kol zmogus nepakeite ranka)
+  const terminai = {};
+  (s.pirkejai_detaliai || []).forEach(x => { terminai[x.pavadinimas] = +x.apm_terminas_d || 0; });
+  blokas.querySelector("#pirkejai-sarasas").innerHTML = s.pirkejai.map(x =>
+    `<option value="${escapeHtml(x)}">${terminai[x] ? "terminas " + terminai[x] + " d." : ""}</option>`).join("");
+  // PROJEKTAI pagal SUTARTIES NUMERI (Projektai.ProID) — reiksme = sutarties nr
+  // (eina i XML <Projektas>), pavadinimas rodomas salia; ieskoti galima abiem
+  const sutartys = (s.projektai_detaliai || []).filter(x => x.sutartis);
+  const sutarciuNr = new Set(sutartys.map(x => x.sutartis.toUpperCase()));
+  blokas.querySelector("#projektai-sarasas").innerHTML = sutartys.length
+    ? sutartys.map(x => `<option value="${escapeHtml(x.sutartis)}">${escapeHtml((x.pavadinimas || "").slice(0, 70))}${x.uzsakovas ? " · " + escapeHtml(x.uzsakovas) : ""}</option>`).join("")
+    : s.projektai.map(x => `<option value="${escapeHtml(x)}">`).join("");
+  blokas.querySelector('[data-pd="tipas"]').innerHTML = `<option value="">— tipas —</option>` +
+    s.pardavimo_tipai.map(x => `<option value="${escapeHtml(x)}" ${x === p.tipas ? "selected" : ""}>${escapeHtml(x)}</option>`).join("");
+  const pridetiDienas = (data, d) => { const t = new Date(data + "T00:00:00"); if (isNaN(t)) return ""; t.setDate(t.getDate() + d); return t.toISOString().slice(0, 10); };
+  const terminoUzrasas = () => {
+    const el = blokas.querySelector('[data-pd-klaida="pirkejas"]');
+    if (p.pirkejas && s.pirkejai.includes(p.pirkejas)) {
+      const d = terminai[p.pirkejas] || 0;
+      el.textContent = [d ? `apmokėjimo terminas Pragmoje: ${d} d.` : "", isPaskutiniu ? "paskutinis pasirinkimas — patikrink" : ""].filter(Boolean).join(" · ");
+      el.style.color = "var(--pilkas)";
+    } else el.style.color = "";
+  };
+  const tikrinti = () => {
+    const k1 = blokas.querySelector('[data-pd-klaida="pirkejas"]');
+    k1.textContent = p.pirkejas && !s.pirkejai.includes(p.pirkejas) ? "⚠ tokio pirkėjo Pragmoje nėra — rinkis iš sąrašo" : "";
+    terminoUzrasas();
+    const k2 = blokas.querySelector('[data-pd-klaida="projektas"]');
+    const projOk = !p.projektas || (sutartys.length ? sutarciuNr.has(p.projektas.toUpperCase()) : s.projektai.includes(p.projektas));
+    const proj = sutartys.find(x => x.sutartis.toUpperCase() === (p.projektas || "").toUpperCase());
+    k2.textContent = projOk ? (proj ? (proj.pavadinimas || "").slice(0, 60) : "") : "⚠ tokios sutarties (projekto) Pragmoje nėra";
+    k2.style.color = projOk ? "var(--pilkas)" : "";
+  };
+  const apmokejimoData = () => {
+    // automatiskai tik kai laukas tuscias arba anksciau uzpildytas automatiskai
+    if (p.apmoketi_iki && !p.apmoketi_auto) return;
+    const d = terminai[p.pirkejas] || 0;
+    const nauja = d && p.data ? pridetiDienas(p.data, d) : "";
+    if (nauja !== (p.apmoketi_iki || "")) {
+      p.apmoketi_iki = nauja; p.apmoketi_auto = !!nauja;
+      const inp = blokas.querySelector('[data-pd="apmoketi_iki"]');
+      if (inp) inp.value = nauja;
+    }
+  };
+  blokas.querySelectorAll("[data-pd]").forEach(inp => {
+    const k = inp.dataset.pd;
+    if (inp.tagName !== "SELECT") inp.value = p[k] || "";
+    inp.oninput = inp.onchange = () => {
+      p[k] = inp.tagName === "TEXTAREA" ? inp.value : (inp.value.trim ? inp.value.trim() : inp.value);
+      if (k === "apmoketi_iki") p.apmoketi_auto = false;      // ranka — nebeperrasom
+      if (k === "pirkejas" || k === "data") apmokejimoData();
+      tikrinti(); pazymetiKeitima();
+      // Apskaitai Pragma juostoje persipiesia „💰 + pardavimas → pirkėjas"
+      if (!window._vadybininkas && k === "pirkejas" && window._pragmaInfo) piestiPragmaJuosta();
+    };
+  });
+  apmokejimoData();
+  tikrinti();
+}
+
+// ── PRAGMA JUOSTA (apskaitai): ka darysim su saskaita Pragmoje ──────────
+// Pasiulymas is serverio (apskaitininkes ankstesnis pasirinkimas tiekejui ->
+// Pragmos tiekeju istorija -> duombazes numatytieji); pakeitimai saugomi
+// saskaita.pragma. Reiksmes TIK is sarasu — laisvo teksto nera.
+async function uzkrautiPragmaJuosta() {
+  const j = $("#pragma-juosta");
+  if (!j) return;
+  window._pragmaInfo = null;
+  if (window._vadybininkas || !B || !B.id) { j.style.display = "none"; return; }
+  const tk = (B.saskaita.tiekejas || {}).imones_kodas || "";
+  const fold = (B.saltinis || {}).darbuotojas || "";
+  // Apskaitininkes PASIRINKTA duombaze (saskaita.pragma.duombaze) — pasiulymas
+  // ir sarasai uzsikrauna JAI; nepasirinkus — serverio numatytoji
+  const db = ((B.saskaita.pragma || {}).duombaze || "").trim();
+  try {
+    const r = await fetch(`/api/pragma/pasiulymas?tiekejo_kodas=${encodeURIComponent(tk)}&folderis=${encodeURIComponent(fold)}&duombaze=${encodeURIComponent(db)}`);
+    if (!r.ok) throw new Error(r.statusText);
+    window._pragmaInfo = await r.json();
+  } catch (_) { j.style.display = "none"; return; }
+  if (!window._pragmaInfo.kontekstas_yra) { j.style.display = "none"; return; }
+  piestiPragmaJuosta();
+  // Pardavimo blokas (pirkejai/projektai/tipai) turi buti TOS PACIOS bazes —
+  // jei buvo uzkrautas kitai (ar dar neuzkrautas), persikrauna
+  const efDb = (efektyviPragma() || {}).duombaze || "";
+  if ($("#pardavimo-blokas") && (!window._pardavimoSarasai || window._pardavimoSarasai.db !== efDb)) uzkrautiPardavimoBloka();
+}
+
+function efektyviPragma() {
+  const info = window._pragmaInfo;
+  if (!info || !B) return null;
+  const p = { ...info.pasiulymas, ...((B.saskaita && B.saskaita.pragma) || {}) };
+  delete p.saltinis; delete p.bandomoji; delete p.pastabos;
+  return p;
+}
+
+function piestiPragmaJuosta() {
+  const j = $("#pragma-juosta"), info = window._pragmaInfo;
+  if (!j || !info || !B) return;
+  j.style.display = "";
+  const p = efektyviPragma();
+  const s = info.sarasai;
+  const bandom = (s.duombazes.find(d => d.duombaze === p.duombaze) || {}).bandomoji;
+  const rankinis = !!(B.saskaita.pragma && Object.keys(B.saskaita.pragma).length);
+  const isskleista = !!window._pragmaIsskleista;
+  const opt = (sar, v) => sar.map(x => `<option value="${escapeHtml(x)}" ${x === v ? "selected" : ""}>${escapeHtml(x)}</option>`).join("")
+    + (v && !sar.includes(v) ? `<option value="${escapeHtml(v)}" selected>${escapeHtml(v)} (nėra sąraše!)</option>` : "");
+  j.innerHTML = `
+    <div class="pragma-santrauka">
+      <b>Pragma${bandom ? ' <span class="pragma-bandom">BANDYMAMS</span>' : ""}:</b>
+      <span>${escapeHtml(p.duombaze)}</span> · <span>${escapeHtml(p.sandelis || "—")}</span> · <span>${escapeHtml(p.tipas || "—")}</span> · <span>${escapeHtml(p.statusas || "—")}</span> · <span>${p.sava_imone ? escapeHtml(p.sava_imone) : '<span style="color:var(--raudona)">sava įmonė neparinkta</span>'}</span> · <span>${escapeHtml(p.grupe || "**")}</span>
+      <span class="pilka">(${rankinis ? "pakeista ranka" : escapeHtml(info.pasiulymas.saltinis || "")}${info.auto ? " · kelsis automatiškai" : " · rankinis importas"})</span>
+      ${(info.pasiulymas.pastabos || []).map(t => `<span class="nesutampa-t" title="Įsiminta reikšmė šioje bazėje nebeegzistuoja">⚠ ${escapeHtml(t)}</span>`).join("")}
+      ${B.saskaita.pardavimas && B.saskaita.pardavimas.pirkejas && B.eilutes.some(e => e.pardavimo_be_pvm != null)
+        ? `<span style="color:var(--zalia); font-weight:600">💰 + pardavimas → ${escapeHtml(B.saskaita.pardavimas.pirkejas)} (pirkimas bus Patvirtintas, pardavimas Nepatvirtintas)</span>` : ""}
+      <button class="mygtukas antras maza" id="pragma-keisti">${isskleista ? "Suskleisti" : "Keisti"}</button>
+    </div>
+    ${isskleista ? `<div class="pragma-laukai">
+      <label>Duombazė<select data-pk="duombaze" title="Į kurią Pragmos bazę kelti šią sąskaitą — pakeitus, sandėlių/tipų/pirkėjų sąrašai persikrauna tai bazei">${s.duombazes
+        .filter(d => !d.bandomoji || window._adminas || info.bandymu_rezimas || d.duombaze === p.duombaze)   // bandomosios: adminui visada, kitiems — kol ijungtas bandymu rezimas
+        .map(d => `<option value="${escapeHtml(d.duombaze)}" ${d.duombaze === p.duombaze ? "selected" : ""}>${escapeHtml(d.duombaze)}${d.bandomoji ? " (bandymams)" : ""}</option>`).join("")}</select></label>
+      <label>Sandėlis<select data-pk="sandelis">${opt(s.sandeliai, p.sandelis)}</select></label>
+      <label>Tipas<select data-pk="tipas">${opt(s.tipai, p.tipas)}</select></label>
+      <label>Statusas<select data-pk="statusas">${opt(s.statusai, p.statusas)}</select></label>
+      <label>Sava įmonė<select data-pk="sava_imone"><option value="">— parinkti —</option>${opt(s.savos_imones, p.sava_imone)}</select></label>
+      <label>Prekių grupė<select data-pk="grupe">${opt(s.grupes, p.grupe)}</select></label>
+      <button class="mygtukas antras maza" id="pragma-atstatyti" title="Grąžinti pasiūlytas reikšmes">↩ pasiūlyta</button>
+    </div>` : ""}`;
+  $("#pragma-keisti").onclick = () => { window._pragmaIsskleista = !window._pragmaIsskleista; piestiPragmaJuosta(); };
+  j.querySelectorAll("[data-pk]").forEach(sel => {
+    sel.onchange = () => {
+      if (sel.dataset.pk === "duombaze") {
+        // KITA BAZE: senieji rankiniai pasirinkimai (sandelis, tipas…) buvo
+        // anai bazei — numetami; pasiulymas ir VISI sarasai persikrauna naujai
+        // bazei is musu serverio (kontekstas jau cia, Pragmos klausti nereikia)
+        B.saskaita.pragma = { duombaze: sel.value };
+        pazymetiKeitima(); uzkrautiPragmaJuosta();
+        return;
+      }
+      B.saskaita.pragma = { ...(efektyviPragma() || {}), [sel.dataset.pk]: sel.value };
+      pazymetiKeitima(); piestiPragmaJuosta();
+    };
+  });
+  const at = $("#pragma-atstatyti");
+  if (at) at.onclick = () => { delete B.saskaita.pragma; pazymetiKeitima(); piestiPragmaJuosta(); };
+}
+
+function piestiApdorotas(s) {
+  try {
+    window._sarasas = s;
+    // PAKETAI: to paties laiško sąskaitos (užsakymas + pasiūlymas) — viena eilutė
+    const paketai = {};
+    s.forEach(x => { if (x.paketas) (paketai[x.paketas] = paketai[x.paketas] || []).push(x); });
+    window._paketai = paketai;
+    // ETAPŲ FILTRAS: vadybininkas mato TIK savo folderio dar neperduotas
+    // sąskaitas; apskaita nemato tų, kurios dar pas vadybininką
+    const savoFolderio = x => !window._vadybFolderis || (x.saltinis || {}).darbuotojas === window._vadybFolderis;
+    const rod0 = s.filter(x => window._vadybininkas ? savoFolderio(x) : x.etapas !== "vadybininkas");
+    // DARBO ZONA = tik tai, kam reikia rankos. Apskaitai ĮKELTOS į Pragmą,
+    // vadybininkui PERDUOTOS apskaitai keliauja į ARCHYVĄ (ten matosi jų
+    // būsena, galima atsiimti) ir darbo sąraše NEegzistuoja.
+    window._archyvas = window._vadybininkas
+      ? rod0.filter(x => x.etapas !== "vadybininkas")
+      : rod0.filter(x => saskaitosBusena(x) === "ikelta");
+    const rod = (window._vadybininkas ? rod0.filter(x => x.etapas === "vadybininkas")
+      : rod0.filter(x => saskaitosBusena(x) !== "ikelta")).filter(atitinkaFiltrus);
+    const grupes = {};
+    rod.forEach(x => { if (x.paketas) (grupes[x.paketas] = grupes[x.paketas] || []).push(x); });
+    const mano = localStorage.getItem("uzp_vardas") || "";
+    const rodomi = [];
+    const panaudoti = new Set();
+    rod.forEach(x => {
+      // Vadybininkui automatiniai (laiško) paketai NEgrupuojami — kiekviena
+      // sąskaita atskira eilutė; grupuojami TIK jo paties sudėti (rankiniai)
+      const grupuoti = x.paketas && grupes[x.paketas].length > 1
+        && (!window._vadybininkas || x.rankinis_paketas);
+      if (grupuoti) {
+        if (panaudoti.has(x.paketas)) return;
+        panaudoti.add(x.paketas);
+        const g = grupes[x.paketas];
+        rodomi.push({ pak: x.paketas, grupe: g, busena: paketoBusena(g),
+                      data: g.map(y => y.data).filter(Boolean).sort()[0] || "" });
+      } else rodomi.push({ ...x, busena: saskaitosBusena(x) });
+    });
+    // SEKCIJOS pagal būseną (klaidos viršuje — reikia veiksmo), viduje — DIENŲ
+    // grupės pagal SĄSKAITOS datą; tvarka pagal jungiklį (įsimenama naršyklėje)
+    const senosVirsuje = (localStorage.getItem("uzp_rikiavimas") || "senos") === "senos";
+    const lyg = (a, c) => { const x = a.data || "9999-99-99", y = c.data || "9999-99-99"; return x < y ? -1 : x > y ? 1 : 0; };
+    const sekcijos = [["klaida", "🔴 Klaidos ir dublikatai — reikia veiksmo"], ["laukia", "🟡 Laukia išrašymo"],
+                      ["issiusta", "🔵 Išsiųsta — laukia Pragmos"], ["ikelta", "🟢 Įkelta į Pragmą"]];
+    let html = "";
+    sekcijos.forEach(([b, pavad]) => {
+      const dalis = rodomi.filter(x => x.busena === b);
+      if (!dalis.length) return;
+      dalis.sort((a, c) => (senosVirsuje ? 1 : -1) * lyg(a, c));
+      html += `<div class="grupes-antraste">${pavad} <span class="kiek">${dalis.length}</span></div>`;
+      let diena = null;
+      dalis.forEach(x => {
+        const d = x.data || "be datos";
+        if (d !== diena) {
+          diena = d;
+          const kiek = dalis.filter(y => (y.data || "be datos") === d).length;
+          html += `<div class="dienos-antraste">📅 ${escapeHtml(d)} <span class="pilka">· ${kiek} sąsk.</span></div>`;
+        }
+        html += x.pak ? paketoEiluteHTML(x.pak, x.grupe, mano) : apdorotosEiluteHTML(x, mano);
+      });
+    });
+    const yraFiltru = Object.values(window._filtrai || {}).some(v => v);
+    $("#apdorotu-sarasas").innerHTML = html
+      || `<div class="folderis-tuscias" style="background:var(--korta); border:1px dashed var(--linija); border-radius:10px">${yraFiltru ? "Pagal filtrą nieko nerasta" : "Išrašymo šiuo metu niekas nelaukia — įkeltos sąskaitos guli Archyve"}</div>`;
+    atnaujintiFiltruValdiklius(rod0);
+    document.querySelectorAll(".apdorota-eilute").forEach(m => {
+      m.onclick = () => m.dataset.paketas ? atidarytiPaketa(m.dataset.paketas) : atidarytiIssaugota(m.dataset.id);
+    });
+    document.querySelectorAll(".apdorota-trinti").forEach(m => {
+      m.onclick = ev => {
+        ev.stopPropagation();
+        m.dataset.atsieti ? atsietiPaketa(m.dataset.atsieti)
+          : m.dataset.trintiPaketa ? trintiVisaPaketa(m.dataset.trintiPaketa)
+          : trintiApdorotaSaskaita(m.dataset.trinti);
+      };
+    });
+    // Vadybininko paketavimo varneles (tik pagrindiniame sarase)
+    window._paketoZymos.forEach(id => { if (!s.some(x => x.id === id)) window._paketoZymos.delete(id); });
+    pririsPaketoVarneles(document.getElementById("apdorotu-sarasas"));
+    atnaujintiPaketoMygtuka();
+    // Atviras folderio langas perpiešiamas su šviežiais duomenimis
+    if (window._atidarytasFolderis) piestiFolderioModala();
+  } catch (_) {}
+}
+
+// „PAĖMIAU" ŽYMĖ — kad dvi kolegės netvarkytų tos pačios sąskaitos vienu metu.
+// Vardas klausiamas vieną kartą ir įsimenamas šioje naršyklėje.
+let _uzimtaId = null, _uzemimoLaikmatis = null;
+
+function manoVardas() {
+  // Tylus naršyklės žymeklis — nieko neklausiam, vardas niekur nerodomas.
+  // Jo užtenka atskirti "aš" nuo "kita kolegė kitame kompe".
+  let v = localStorage.getItem("uzp_vardas") || "";
+  if (!v) {
+    v = "k-" + Math.random().toString(16).slice(2, 10);
+    localStorage.setItem("uzp_vardas", v);
+  }
+  return v;
+}
+
+async function pretenduoti(d, klausti) {
+  // Grąžina false TIK kai žmogus pats atsisako atidaryti svetimą sąskaitą.
+  if (!d || !d.id) return true;
+  // Perjungiant paketo korteles — senos sąskaitos žymė nuimama iškart
+  if (_uzimtaId && _uzimtaId !== d.id) paleistiUzemima();
+  const kas = manoVardas();
+  try {
+    const r = await fetch("/api/saskaita/uzimti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.id, kas }) });
+    const j = await r.json();
+    if (!j.pavyko && j.kas) {
+      d._svetima = j.kas;
+      if (klausti && !confirm(`Šią sąskaitą šiuo metu tvarko kolegė.\nAtidaryti vis tiek? XML mygtukas bus užrakintas, kad darbas nesidubliuotų.`)) return false;
+      return true;
+    }
+    d._svetima = "";
+    _uzimtaId = d.id;
+    clearInterval(_uzemimoLaikmatis);
+    // Kol sąskaita atidaryta — žymė atnaujinama, kad nepasentų (serveris ją
+    // laiko gyva 30 min; pamirštas uždaryti langas užrakto nepalieka amžinai)
+    _uzemimoLaikmatis = setInterval(() => {
+      fetch("/api/saskaita/uzimti", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.id, kas }) }).catch(() => {});
+    }, 5 * 60 * 1000);
+  } catch (_) {}
+  return true;
+}
+
+function paleistiUzemima() {
+  clearInterval(_uzemimoLaikmatis);
+  _uzemimoLaikmatis = null;
+  if (!_uzimtaId) return;
+  const kunas = JSON.stringify({ id: _uzimtaId, kas: localStorage.getItem("uzp_vardas") || "" });
+  _uzimtaId = null;
+  try { navigator.sendBeacon("/api/saskaita/atlaisvinti", new Blob([kunas], { type: "application/json" })); } catch (_) {}
+}
+window.addEventListener("pagehide", paleistiUzemima);
+
+async function atidarytiIssaugota(id) {
+  try {
+    const r = await fetch("/api/saskaita/" + id);
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    const d = await r.json();
+    if (!(await pretenduoti(d, true))) return;
+    rodyti(d);
+  } catch (e) {
+    alert("Nepavyko atidaryti: " + e.message);
+  }
+}
+
+// ── PAKETAS: vieno laiško sąskaitos + pasiūlymas viename lange kortelėmis ──
+function atidarytiPaketa(pid) {
+  const g = (window._paketai || {})[pid] || [];
+  if (!g.length) return;
+  const pirmas = g.find(x => !x.xml_sugeneruota) || g[0];
+  atidarytiIssaugota(pirmas.id);
+}
+
+function pieštiPaketoJuosta() {
+  const j = $("#paketo-juosta");
+  const kom = B && B.vadybininko_komentarai;
+  const pid = kom && kom.paketas;
+  if (!pid || ((kom.kartu || []).length < 2 && !(kom.priedai || []).length)) {
+    j.style.display = "none"; j.innerHTML = ""; return;
+  }
+  const sar = window._sarasas || [];
+  const kortos = (kom.kartu || []).map(fv => {
+    const irasas = sar.find(x => x.paketas === pid && (x.saltinis || {}).failas === fv);
+    if (!irasas) return `<span class="pak-tab pilkas" title="dar apdorojama">⏳ ${escapeHtml(fv)}</span>`;
+    const aktyvi = irasas.id === B.id;
+    const uzrasas = irasas.numeris && irasas.numeris !== "—" ? irasas.numeris : fv;
+    return `<button class="pak-tab ${aktyvi ? "aktyvus" : ""}" data-id="${irasas.id}">${irasas.xml_sugeneruota ? "✓ " : ""}${escapeHtml(uzrasas)}</button>`;
+  }).join("");
+  const priedai = (kom.priedai || []).map(p =>
+    `<button class="pak-tab" data-priedas="${escapeHtml(p.failas)}" data-vardas="${escapeHtml(p.vardas)}" data-od="${p.od_id ? "1" : ""}">📎 ${escapeHtml(p.vardas)}</button>`).join("");
+  j.innerHTML = kortos + priedai;
+  j.style.display = "flex";
+  j.querySelectorAll("[data-id]").forEach(m => {
+    m.onclick = () => { if (m.dataset.id !== B.id) atidarytiIssaugota(m.dataset.id); };
+  });
+  j.querySelectorAll("[data-priedas]").forEach(m => {
+    m.onclick = () => m.dataset.od
+      ? atidarytiOffice(m.dataset.priedas, m.dataset.vardas)
+      : perziuretiPrieda(m.dataset.priedas, m.dataset.vardas);
+  });
+}
+
+async function apdorotiIsFolderio(darbuotojas, failas) {
+  rodytiUzdanga(true);
+  try {
+    const r = await fetch("/api/darbuotojo-failas", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ darbuotojas, failas }),
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    rodyti(await r.json());
+  } catch (e) {
+    alert("Nepavyko: " + e.message);
+  } finally {
+    rodytiUzdanga(false);
+  }
+}
+// Sarasai uzkraunami TIK suzinojus, ar vartotojas administratorius (window._adminas),
+// kitaip pirmas piesimas parodytu netinkamus valdiklius. Zr. /api/busena auksciau.
+// Tinklo klaidos atveju ekrano nepaliekam pasleptio amzinai
+window._busenaGauta = window._busenaGauta.catch(() => { document.documentElement.style.visibility = ""; });
+window._busenaGauta.then(() => { uzkrautiFolderius(); uzkrautiApdorotas(); });
+
+// ── Ikelimas ─────────────────────────────────────────────────────────────
+const zona = $("#zona"), failoInput = $("#failo-input");
+zona.onclick = () => failoInput.click();
+zona.ondragover = e => { e.preventDefault(); zona.classList.add("velkama"); };
+zona.ondragleave = () => zona.classList.remove("velkama");
+zona.ondrop = e => { e.preventDefault(); zona.classList.remove("velkama"); if (e.dataTransfer.files[0]) ikelti(e.dataTransfer.files[0]); };
+failoInput.onchange = () => { if (failoInput.files[0]) ikelti(failoInput.files[0]); };
+
+async function ikelti(failas) {
+  rodytiUzdanga(true);
+  try {
+    const fd = new FormData();
+    fd.append("failas", failas);
+    const r = await fetch("/api/ikelti", { method: "POST", body: fd });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    rodyti(await r.json());
+    // Ikelta saskaita is karto atsiranda ir sarase / folderyje (vadybininkui — jo)
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) {
+    alert("Nepavyko: " + e.message);
+  } finally {
+    rodytiUzdanga(false);
+  }
+}
+
+function rodytiUzdanga(taip) { $("#uzdanga").style.display = taip ? "flex" : "none"; }
+
+// ── Rezultato rodymas ────────────────────────────────────────────────────
+function rodyti(rez) {
+  B = rez;
+  // Kiti keliai (folderis, įkėlimas, AI iš naujo) žymę užsideda tyliai;
+  // atidarytiIssaugota jau pasiklausė pati (_svetima tada užpildyta)
+  if (B.id && B._svetima === undefined) pretenduoti(B, false);
+  B.eilutes.forEach(e => {
+    // Issaugotas parinkimas turi pirmenybe; kitaip ATMINTIS uzdeda pr koda pati
+    if (!e.pasirinkimas)
+      e.pasirinkimas = e.atmintis
+        ? { tipas: "atmintis", kodas: e.atmintis.pr_kodas, pavadinimas: e.atmintis.pr_pavadinimas }
+        : null;
+    e.rodomos = e.rekomendacijos;
+    e.naujaAktyvi = !!(e.pasirinkimas && e.pasirinkimas.tipas === "nauja");
+    // PVM € numatytoji reiksme — suma × tarifas (2 sk. po kablelio); po to redaguojama
+    if (e.pvm_suma == null && e.suma != null && e.pvm_proc != null)
+      e.pvm_suma = Math.round(e.suma * e.pvm_proc) / 100;
+  });
+
+  $("#ikelimo-ekranas").style.display = "none";
+  $("#darbo-ekranas").classList.add("aktyvus");
+  $("#apacia").classList.add("aktyvi");
+  $("#nauja-saskaita").style.display = "";
+  $("#ai-is-naujo").style.display = B.id ? "" : "none";
+  $("#atstatyti-pradine").style.display = B.id ? "" : "none";
+  atnaujintiPerdavimoMygtuka();
+  atnaujintiSutartiesMygtuka();
+  uzkrautiPragmaJuosta();
+  // Jei saskaitai jau parinkta sutartis — uzsikrauna jos pozicijos ir
+  // eiluciu juostos persipiesia su select'ais
+  if ((window._vadybininkas || pardavimoSrautas()) && B.saskaita && B.saskaita.pardavimo_sutartis && !window._sutartys)
+    uzkrautiSutartis().then(() => { if (B) pieštiEilutes(); });
+  $("#issaugojimo-busena").textContent = "";
+
+  const k = $("#kaire");
+  k.innerHTML = B.mime === "application/pdf"
+    ? `<iframe src="/failas/${B.failo_id}"></iframe>`
+    : `<img src="/failas/${B.failo_id}" alt="sąskaita">`;
+
+  // AI kaina rodoma TIK administratoriui (busena.admin)
+  if (!window._adminas)
+    $("#ai-kaina").textContent = "";
+  else if (B.is_issaugotos)
+    $("#ai-kaina").textContent = "Atidaryta iš išsaugotos (be AI, 0 ct)";
+  else if (B.ai && B.ai.kaina_ct != null)
+    $("#ai-kaina").textContent = `AI kaina: ~${B.ai.kaina_ct} ct (${B.ai.tokenai_in}+${B.ai.tokenai_out} tok.)`;
+
+  const isp = $("#ispejimai");
+  isp.innerHTML = "";
+  // Vadybininko komentarai — laiško tekstas ir ne-sąskaitų priedai (pvz. kainų
+  // lentelė). Tik parodoma apskaitai; į XML niekas iš čia nekeliauja.
+  // Vadybininkui laisko komentarai/priedai NErodomi (jis pats rase ta laiska) —
+  // jis cia raso savo zinute apskaitai (zemiau)
+  const kom = window._vadybininkas ? null : B.vadybininko_komentarai;
+  if (kom && (kom.tekstas || kom.tema || (kom.priedai || []).length)) {
+    isp.innerHTML += `<div class="juosta melyna"><b>💬 Vadybininko komentarai${kom.nuo ? " · " + escapeHtml(kom.nuo) : ""}</b>
+      ${kom.tema ? `<div style="margin-top:4px"><b>${escapeHtml(kom.tema)}</b></div>` : ""}
+      ${kom.tekstas ? `<div style="margin-top:4px; white-space:pre-wrap">${escapeHtml(kom.tekstas)}</div>` : ""}
+      ${(kom.priedai || []).map(p =>
+        `<div style="margin-top:4px">📎 <a href="#" data-priedas="${escapeHtml(p.failas)}" data-vardas="${escapeHtml(p.vardas)}" data-od="${p.od_id ? "1" : ""}">${escapeHtml(p.vardas)}</a>${p.od_id ? ` <span class="zymelis melynas">Office</span>` : ""}</div>`).join("")}
+    </div>`;
+  }
+  if (!B.yra_saskaita)
+    isp.innerHTML += `<div class="juosta raudona">AI mano, kad tai NE pirkimo sąskaita — patikrink dokumentą.</div>`;
+  if (B.ispejimai && B.ispejimai.length)
+    isp.innerHTML += `<div class="juosta geltona"><b>Patikrink (kodas rado neatitikimų):</b><ul>${B.ispejimai.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul></div>`;
+  // VADYBININKO ŽINUTĖ: vadybininkas rašo pastabą apskaitai; apskaitininkė
+  // ją mato mėlyname bloke (issisaugo kartu su sąskaita, į XML nekeliauja)
+  // PARDAVIMO BLOKAS (pirkejas / projektas / tipas / datos / pastaba Pragmai) —
+  // vadybininkui VISADA; apskaitai — vadybininko srauto saskaitose, REDAGUOJAMAS
+  // (užsakovo prasymas 09-07: apskaita gali pataisyti pirkeja, pastaba ir t.t.)
+  const pardBlokasHTML = `
+      <div class="juosta melyna" id="pardavimo-blokas"><b>🏷 Pardavimas (kam parduodama)</b> <span style="color:var(--pilkas); font-size:12px">— tik iš Pragmos sąrašų</span>
+        <div class="pardavimo-laukai">
+          ${window._vadybininkas ? `<label>Duombazė<select data-pd-db title="Į kurią Pragmos bazę keliama — pirkėjų ir projektų sąrašai tos bazės (apskaita mato tą patį pasirinkimą)"></select></label>` : ""}
+          <label>Pirkėjas<input list="pirkejai-sarasas" data-pd="pirkejas" placeholder="rašyk — filtruoja iš Pragmos"><datalist id="pirkejai-sarasas"></datalist><span class="pd-klaida" data-pd-klaida="pirkejas"></span></label>
+          <label>Projektas (sutartis)<input list="projektai-sarasas" data-pd="projektas" placeholder="sutarties nr. — neprivaloma"><datalist id="projektai-sarasas"></datalist><span class="pd-klaida" data-pd-klaida="projektas"></span></label>
+          <label>Pardavimo tipas<select data-pd="tipas"></select></label>
+          <label>Data<input type="date" data-pd="data"></label>
+          <label>Apmokėti iki<input type="date" data-pd="apmoketi_iki"></label>
+          <label class="pd-pastaba">Pastaba Pragmai <span class="pilka" style="font-weight:400">(į pardavimo dokumento pastabų lauką — vardas, sutartis…)</span><textarea data-pd="pastaba" rows="1" placeholder="pvz. pardavėjas, sutarties nr."></textarea></label>
+        </div></div>`;
+  const zinuteHTML = (antraste, paaisk) => `<div class="juosta melyna"><b>${antraste}</b> <span style="color:var(--pilkas); font-size:12px">${paaisk}</span>
+      <textarea id="vadybininko-zinute" rows="2" placeholder="Vidinė pastaba prie šios sąskaitos (išsisaugo pati)"
+        style="width:100%; margin-top:6px; padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit; font:inherit; resize:vertical"></textarea></div>`;
+  let zinuteRedaguojama = false, pardBlokas = false;
+  if (window._vadybininkas) {
+    isp.innerHTML += zinuteHTML("💬 Komentaras apskaitai", "(vidinis — mato tik apskaitininkė, į Pragmą nekeliauja)") + pardBlokasHTML;
+    zinuteRedaguojama = pardBlokas = true;
+  } else if (pardavimoSrautas()) {
+    isp.innerHTML += zinuteHTML("💬 Vadybininko žinutė", "(vidinė, į Pragmą nekeliauja — galima papildyti)") + pardBlokasHTML;
+    zinuteRedaguojama = pardBlokas = true;
+  } else if (B.saskaita && B.saskaita.vadybininko_zinute) {
+    isp.innerHTML += `<div class="juosta melyna"><b>💬 Vadybininko žinutė</b>
+      <div style="margin-top:4px; white-space:pre-wrap">${escapeHtml(B.saskaita.vadybininko_zinute)}</div></div>`;
+  }
+  // PRAGMOS IMPORTO REZULTATAS (is agento): galutine busena prie saskaitos
+  const pim = B.pragmos_importas, ppa = B.pragmos_pardavimo_importas, pu = B.pardavimo_uzsakymas;
+  // ATSKIRAS pardavimo XML (Document-Sale): musu uzsakymo nr + is kuriu pirkimu surinktas
+  if (pu && pu.nr && !window._vadybininkas)
+    isp.innerHTML += `<div class="juosta melyna"><b>🧾 Pardavimas ${escapeHtml(pu.nr)}</b> — atskiras XML${pu.pirkejas ? ", pirkėjas " + escapeHtml(pu.pirkejas) : ""}${(pu.pirkimai || []).length > 1 ? ", iš pirkimų " + escapeHtml(pu.pirkimai.join(", ")) : ""}${!ppa || !ppa.busena ? ' <span style="color:var(--pilkas); font-size:12px">— Pragmos atsakymo dar nėra</span>' : ""}</div>`;
+  [["Pirkimas", pim], ["Pardavimas", ppa]].forEach(([kas, pi]) => {
+    if (!pi || !pi.busena) return;
+    const klase = pi.busena === "ikelta" ? "melyna" : (pi.busena === "dublikatas" || pi.busena === "laukia") ? "geltona" : "raudona";
+    const tekstas = pi.busena === "ikelta" ? `įkelta į Pragmą (ID ${pi.pragmos_id || "?"}${pi.pardavimo_numeris ? ", dok. " + escapeHtml(pi.pardavimo_numeris) : ""}${pi.pirkejas ? ", pirkėjas " + escapeHtml(pi.pirkejas) : ""}, ${escapeHtml(pi.duombaze || "")})${bandomojiBaze(pi.duombaze) ? ` <b>— BANDYMŲ bazė, į tikrą dar nekelta</b>` : ""}`
+      : pi.busena === "laukia" ? `Pragmoje LAUKIA — ${escapeHtml(pi.priezastis || "laukiama pirkimo")}. Įsikels savaime, kai pirkimas bus Pragmoje (ne klaida).`
+      : pi.busena === "dublikatas" ? `Pragma atmetė kaip DUBLIKATĄ — jau buvo įvesta (ID ${pi.sutapo_su_id || "?"}${pi.pardavimo_numeris ? ", " + escapeHtml(pi.pardavimo_numeris) : ""}). Iš naujo nesiųsti.`
+      : `importo KLAIDA: ${escapeHtml(pi.priezastis || "be priežasties")} — pataisyk ir formuok XML iš naujo.`;
+    isp.innerHTML += `<div class="juosta ${klase}"><b>🏛 Pragma · ${kas}:</b> ${tekstas} <span style="color:var(--pilkas); font-size:12px">(${escapeHtml(pi.gauta || "")})</span></div>`;
+  });
+  // Ivedimu pririsimai PO VISU innerHTML papildymu (+= perkuria turini ir
+  // numusa anksciau uzdetus oninput/onclick)
+  if (zinuteRedaguojama) {
+    const vz = isp.querySelector("#vadybininko-zinute");
+    vz.value = (B.saskaita && B.saskaita.vadybininko_zinute) || "";
+    vz.oninput = () => { B.saskaita.vadybininko_zinute = vz.value; pazymetiKeitima(); };
+  }
+  if (pardBlokas) uzkrautiPardavimoBloka();
+  // Priedu nuorodos — irgi po visu papildymu
+  isp.querySelectorAll("[data-priedas]").forEach(a => {
+    a.onclick = ev => {
+      ev.preventDefault();
+      // Su OneDrive kopija — tikras Office PROGRAMOS VIDUJE (PWA langas
+      // niekur nedingsta); be jos — vietine perziura
+      if (a.dataset.od) atidarytiOffice(a.dataset.priedas, a.dataset.vardas);
+      else perziuretiPrieda(a.dataset.priedas, a.dataset.vardas);
+    };
+  });
+
+  document.querySelectorAll("[data-l]").forEach(inp => {
+    const kelias = inp.dataset.l.split(".");
+    inp.value = kelias.length === 2 ? (B.saskaita[kelias[0]][kelias[1]] ?? "") : (B.saskaita[kelias[0]] ?? "");
+    inp.oninput = () => {
+      if (kelias.length === 2) B.saskaita[kelias[0]][kelias[1]] = inp.value;
+      else B.saskaita[kelias[0]] = inp.value;
+      pazymetiKeitima();
+    };
+  });
+
+  pieštiPaketoJuosta();
+  pieštiEilutes();
+  perskaiciuoti();
+}
+window.rodyti = rodyti;
+
+// ── Automatinis issaugojimas (redagavimai saugomi patys, po 0.8 s pauzes) ──
+let saugojimoLaikmatis = null;
+function pazymetiKeitima() {
+  if (!B || !B.id) return;
+  $("#issaugojimo-busena").textContent = "Saugoma…";
+  clearTimeout(saugojimoLaikmatis);
+  saugojimoLaikmatis = setTimeout(issaugotiDabar, 800);
+}
+async function issaugotiDabar() {
+  if (!B || !B.id) return;
+  try {
+    const eilutes = B.eilutes.map(e => ({
+      pavadinimas: e.pavadinimas, tiekejo_kodas: e.tiekejo_kodas, ean: e.ean,
+      kiekis: e.kiekis, vienetas: e.vienetas, vnt_kaina: e.vnt_kaina, suma: e.suma,
+      pvm_proc: e.pvm_proc, pvm_suma: e.pvm_suma, rekomendacijos: e.rekomendacijos || [],
+      atmintis: e.atmintis || null, pasirinkimas: e.pasirinkimas || null,
+      // sujungtos eilutes komponentai — kad isardymas veiktu ir po perkrovimo
+      ...(e.komponentai ? { komponentai: e.komponentai } : {}),
+      // rysiu laukai IRGI issaugomi: inkarai ir pinigu grizimo susiejimai
+      // gyvi po perkrovimo ir kitam zmogui (vadybininkas -> apskaitininke)
+      ...(e.suma_inkaruota ? { suma_inkaruota: true } : {}),
+      ...(e.pvm_inkaruota ? { pvm_inkaruota: true } : {}),
+      ...(e.eil_id ? { eil_id: e.eil_id } : {}),
+      ...(e.pinigai_is ? { pinigai_is: e.pinigai_is } : {}),
+      ...(e.grazinti_kieki ? { grazinti_kieki: true } : {}),
+      // vadybininko PARDAVIMO suma be PVM — pajamavimo neliecia
+      ...(e.pardavimo_be_pvm != null ? { pardavimo_be_pvm: e.pardavimo_be_pvm } : {}),
+      ...(e.pardavimo_vnt != null ? { pardavimo_vnt: e.pardavimo_vnt } : {}),
+      ...(e.pardavimo_ikainis != null ? { pardavimo_ikainis: e.pardavimo_ikainis } : {}),
+      ...(e.pardavimo_pozicija ? { pardavimo_pozicija: e.pardavimo_pozicija } : {}),
+    }));
+    const r = await fetch("/api/saskaita/issaugoti", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: B.id, saskaita: B.saskaita, eilutes }),
+    });
+    $("#issaugojimo-busena").textContent = r.ok ? "Išsaugota ✓" : "⚠ neišsaugota";
+  } catch (_) {
+    $("#issaugojimo-busena").textContent = "⚠ neišsaugota";
+  }
+}
+
+function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+// Pragmos dokumento busena is agento srauto: + patvirtintas, ? nepatvirtintas, - juodrastis
+function pragmosBusena(b) { return b === "+" ? "patvirtintas" : b === "-" ? "juodraštis" : "nepatvirtintas"; }
+
+// ── Priedo perziura (laisko Excel/CSV/Word rodomas LANGE, ne siunciamas) ──
+// TIKRAS Office (Excel/Word/PDF) PROGRAMOS VIDUJE: iframe su laikina
+// SharePoint embed nuoroda, kuria serveris sugeneruoja siam atidarymui.
+// PWA langas niekur nenavigauja — uzdarius modala programa lieka kaip buvusi.
+function atidarytiOffice(failas, vardas) {
+  const fonas = document.createElement("div");
+  fonas.style.cssText = "position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:14px";
+  fonas.innerHTML = `<div style="background:var(--korta,#fff); color:inherit; border-radius:12px; padding:12px 14px; width:min(1250px,97vw); height:92vh; display:flex; flex-direction:column; gap:8px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <b style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">📎 ${escapeHtml(vardas || failas)}</b>
+      <button class="mygtukas antras" style="margin:0">Uždaryti</button>
+    </div>
+    <iframe src="/api/priedas/${encodeURIComponent(failas)}/office" style="flex:1; width:100%; border:1px solid var(--linija); border-radius:8px; background:#fff"></iframe>
+  </div>`;
+  fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+  fonas.querySelector("button").onclick = () => fonas.remove();
+  document.body.appendChild(fonas);
+}
+
+async function perziuretiPrieda(failas, vardas) {
+  let vidus, lapai = null;
+  try {
+    const r = await fetch(`/api/priedas/${encodeURIComponent(failas)}/perziura`);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    const j = await r.json();
+    if (j.tipas === "lapai") {
+      // HTML surinktas serveryje (langeliai escapinti) — cia tik parodom
+      lapai = j.lapai || [];
+      vidus = `${lapai.length > 1 ? `<div class="xl-skirtukai">${lapai.map((l, i) =>
+        `<button data-lapas="${i}" class="${i === 0 ? "aktyvus" : ""}">${escapeHtml(l.vardas)}</button>`).join("")}</div>` : ""}
+        ${lapai.map((l, i) => `<div class="xl-lapas" data-lapas-nr="${i}" style="${i ? "display:none" : ""}; overflow:auto; max-height:62vh">${l.html}</div>`).join("")}`;
+    }
+    else if (j.tipas === "tekstas") vidus = `<pre style="white-space:pre-wrap; font:inherit; max-height:62vh; overflow:auto; margin:0">${escapeHtml(j.tekstas || "")}</pre>`;
+    else vidus = `<div>${escapeHtml(j.zinute || "Peržiūra negalima.")}</div>
+      <div style="margin-top:8px"><a href="/api/priedas/${encodeURIComponent(failas)}" style="color:var(--akcentas)">vis tiek atsisiųsti failą</a></div>`;
+  } catch (e) {
+    vidus = `<div>Nepavyko parodyti: ${escapeHtml(e.message)}</div>`;
+  }
+  const fonas = document.createElement("div");
+  fonas.style.cssText = "position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:20px";
+  fonas.innerHTML = `<div style="background:var(--korta,#fff); color:inherit; border-radius:12px; padding:16px 18px; max-width:min(1000px,95vw); max-height:85vh; overflow:hidden; display:flex; flex-direction:column; gap:10px">
+    <div style="display:flex; align-items:center; gap:10px">
+      <b style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">📎 ${escapeHtml(vardas || failas)}</b>
+      <button class="mygtukas antras" style="margin:0">Uždaryti</button>
+    </div>
+    <div style="overflow:auto">${vidus}</div>
+  </div>`;
+  fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+  fonas.querySelector("button").onclick = () => fonas.remove();
+  // Lapu skirtukai (kai Excel'yje keli lapai)
+  fonas.querySelectorAll("[data-lapas]").forEach(m => {
+    m.onclick = () => {
+      fonas.querySelectorAll("[data-lapas]").forEach(x => x.classList.toggle("aktyvus", x === m));
+      fonas.querySelectorAll(".xl-lapas").forEach(d => d.style.display = d.dataset.lapasNr === m.dataset.lapas ? "" : "none");
+    };
+  });
+  document.body.appendChild(fonas);
+}
+
+// ── Eilutes ──────────────────────────────────────────────────────────────
+// Sujungimui pazymetos eilutes (objektu nuorodos — isgyvena perpiesimus,
+// o atidarius kita saskaita savaime isvalomos, nes objektai nebe tie)
+window._sujungimoZymos = window._sujungimoZymos || new Set();
+
+function pieštiEilutes() {
+  const kont = $("#eilutes");
+  kont.innerHTML = "";
+  window._sujungimoZymos.forEach(e => { if (!B.eilutes.includes(e)) window._sujungimoZymos.delete(e); });
+  B.eilutes.forEach((e, i) => kont.appendChild(eilutesElementas(e, i)));
+  $("#eiluciu-sk").textContent = `(${B.eilutes.length})`;
+  atnaujintiSujungimoMygtuka();
+}
+
+function atnaujintiSujungimoMygtuka() {
+  const n = window._sujungimoZymos.size;
+  const m = $("#sujungti-eilutes");
+  m.style.display = n >= 2 ? "" : "none";
+  m.textContent = `🔗 Sujungti pažymėtas (${n})`;
+}
+
+// Centu tikslumo sumavimas: kiekvieno komponento eurai paverciami SVEIKAIS
+// centais ir tik tada sudedami — jokio slankaus kablelio nutekejimo
+function _centai(x) { return Math.round((+x || 0) * 100); }
+
+function sujungtiPazymetas() {
+  const pasirinktos = B.eilutes.filter(e => window._sujungimoZymos.has(e));
+  if (pasirinktos.length < 2) return;
+  const tarifai = [...new Set(pasirinktos.map(e => +e.pvm_proc || 0))];
+  if (tarifai.length > 1) {
+    alert(`Pažymėtos eilutės turi skirtingus PVM tarifus (${tarifai.join("%, ")}%) — sujungti negalima, nes išsikreiptų PVM apskaita.`);
+    return;
+  }
+  const ivestas = prompt("Sujungtos eilutės pavadinimas (gali įrašyti visiškai naują):",
+    pasirinktos[0].pavadinimas || "");
+  if (ivestas === null) return;
+  const pavadinimas = ivestas.trim() || pasirinktos[0].pavadinimas || "Komplektas";
+  // PINIGAI CENTAS I CENTA: suma ir PVM = komponentu verciu suma, todel
+  // dokumento bendros sumos nepasislenka ne per centa
+  const suma = pasirinktos.reduce((s, e) => s + _centai(e.suma), 0) / 100;
+  const pvm = pasirinktos.reduce((s, e) => s + _centai(e.pvm_suma != null ? e.pvm_suma
+    : (+e.suma || 0) * (+e.pvm_proc || 0) / 100), 0) / 100;
+  // PARDAVIMO suma keliauja kartu: sujungtos eilutes pardavimas = daliu suma
+  const pardYra = pasirinktos.some(e => e.pardavimo_be_pvm != null);
+  const pard = pardYra ? pasirinktos.reduce((s, e) => s + _centai(e.pardavimo_be_pvm), 0) / 100 : null;
+  const nauja = {
+    pavadinimas, tiekejo_kodas: "", ean: "",
+    kiekis: 1, vienetas: "kompl", vnt_kaina: suma, suma, suma_inkaruota: true,
+    pvm_proc: tarifai[0], pvm_suma: pvm,
+    ...(pard != null ? { pardavimo_be_pvm: pard } : {}),
+    rekomendacijos: [], rodomos: [], pasirinkimas: null, naujaAktyvi: false,
+    // Isardymui: originalios eilutes issaugomos pilnos (su parinkimais)
+    komponentai: pasirinktos.map(e => { const k = { ...e }; delete k.rodomos; delete k.naujaAktyvi; return k; }),
+  };
+  const vieta = B.eilutes.indexOf(pasirinktos[0]);
+  B.eilutes = B.eilutes.filter(e => !window._sujungimoZymos.has(e));
+  B.eilutes.splice(vieta, 0, nauja);
+  window._sujungimoZymos.clear();
+  pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  rekomendacijosEilutei(nauja);   // vektorine paieska NAUJAM pavadinimui
+}
+
+// Kortelu rekomendacijos perleidziamos sujungtam/naujam pavadinimui —
+// vektorine paieska pagal ta pavadinima, o ne pagal senus komponentus
+async function rekomendacijosEilutei(e) {
+  // Vadybininkui korteliu parinkimo nera — katalogo paieskos nekvieciam
+  if (window._vadybininkas) return;
+  try {
+    const r = await fetch("/api/paieska", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tekstas: e.pavadinimas || "", vienetas: e.vienetas || "" }),
+    });
+    if (!r.ok) return;
+    e.rekomendacijos = e.rodomos = (await r.json()).rezultatai || [];
+    if (B.eilutes.includes(e)) pieštiEilutes();
+  } catch (_) {}
+}
+
+function eilutesElementas(e, i) {
+  const el = document.createElement("div");
+  el.className = "eilute";
+  const irankiaiHTML = `
+      <button class="nauja-is" title="Nauja prekė iš ŠIOS pozicijos — paima dalį jos sumos, bendra dokumento suma nepajuda">💸</button>
+      <button class="skaidyti" title="Išskaidyti kiekį į dvi eilutes — sumos pasiskirsto proporcingai, bendra suma nepajuda">✂</button>
+      <button class="apdalinti" title="Apdalinti: šios eilutės sumą paskirstyti pasirinktoms pozicijoms (eilutė išnyksta, bendra suma nepajuda)">➗</button>
+      <button class="trinti" title="Šalinti eilutę">✕</button>`;
+  const pirkimoLaukaiHTML = `
+      <div><label>Kiekis</label><input data-k="kiekis" type="number" step="any"></div>
+      <div><label>Vnt.</label><input data-k="vienetas"></div>
+      <div><label>Vnt. kaina be PVM</label><input data-k="vnt_kaina" type="number" step="any"></div>
+      <div><label>Suma be PVM</label><input data-k="suma" type="number" step="any"></div>
+      <div><label>PVM %</label><input data-k="pvm_proc" type="number" step="any"></div>
+      <div><label>PVM €</label><input data-k="pvm_suma" type="number" step="any"></div>`;
+  // VADYBININKUI eilute — DVI EILES: pirkimas tekstu (kontekstas, laukeliai po ✎),
+  // pardavimas ant VIENETO (be PVM / su PVM / marza %) su sumomis salia.
+  // Apskaitininkei — iprastas tinklelis su laukeliais.
+  // PARDAVIMO EILE — ta pati vadybininkui IR apskaitai (užsakovo prasymas 09-07:
+  // apskaita pardavimo kainas ne tik mato, bet ir koreguoja): trys susieti
+  // ivedimai ant vieneto + sumos. Apskaitai rodoma tik vadybininko srauto saskaitose.
+  const pardavimoEileHTML = `
+    <div class="vad-pardavimas">
+      <span class="vad-zyme">PARDAVIMAS</span>
+      <label>vnt. be PVM<input data-vp="vnt" type="text" inputmode="decimal" placeholder="—"></label>
+      <label>vnt. su PVM<input data-vp="vnt_su" type="text" inputmode="decimal" placeholder="—"></label>
+      <label>marža %<input data-vp="marza" type="text" inputmode="decimal" placeholder="—"></label>
+      <span class="vad-sut"></span>
+      <span class="vad-sumos"></span>
+    </div>`;
+  const virsusHTML = window._vadybininkas ? `
+    <div class="vad-virsus">
+      <input type="checkbox" class="sujungti-varne" title="Pažymėti sujungimui į vieną eilutę">
+      <div class="nr">${i + 1}</div>
+      <div><textarea data-k="pavadinimas" rows="1" class="pavadinimo-laukas"></textarea></div>
+      <div class="vad-irankiai">${irankiaiHTML}</div>
+    </div>
+    <div class="vad-pirkimas"><span class="vad-zyme">PIRKIMAS</span>
+      <label class="vad-kiekis" title="Kiekis, kuris realiai parduodamas (tiekėjas gali išrašyti pakuotėmis). Keičiant kiekį eilutės suma NEJUDA — persiskaičiuoja vieneto kaina.">kiekis<input data-k="kiekis" type="number" step="any"></label>
+      <label class="vad-kiekis" title="Matas (vnt, pak, m…). Pakeitus matą įrašyk ir naują kiekį — suma lieka popieriaus.">matas<input data-k="vienetas"></label>
+      <span class="vad-pirkimo-tekstas"></span><button class="vad-redaguoti" title="Koreguoti kitus pirkimo laukus (paprastai tai apskaitininkės darbas)">✎</button></div>
+    <div class="vad-pirkimo-laukai" hidden>${pirkimoLaukaiHTML.replace(/<div><label>Kiekis<\/label>.*?<\/div>\s*<div><label>Vnt\.<\/label>.*?<\/div>/s, "")}</div>
+    ${pardavimoEileHTML}` : `
+    <div class="virsus">
+      <input type="checkbox" class="sujungti-varne" title="Pažymėti sujungimui į vieną eilutę">
+      <div class="nr">${i + 1}</div>
+      <div><label>Pavadinimas</label><textarea data-k="pavadinimas" rows="1" class="pavadinimo-laukas"></textarea></div>
+      ${pirkimoLaukaiHTML}
+      ${irankiaiHTML}
+    </div>
+    ${pardavimoSrautas() ? pardavimoEileHTML : ""}`;
+  el.innerHTML = `
+    ${virsusHTML}
+    ${(e.komponentai || []).length ? `<div class="komponentai">🔗 Sujungta iš ${e.komponentai.length} eil.:
+      <span>${e.komponentai.map(k => escapeHtml((k.pavadinimas || "?").slice(0, 45))).join(" · ")}</span>
+      <button class="isardyti" title="Grąžinti originalias eilutes (sumos grįžta tiksliai)">Išardyti</button>
+    </div>` : ""}
+    <div class="korteles-blokas">
+      <div class="pasirinkta-kortele"></div>
+      <div class="rek-sarasas"></div>
+      <div class="kort-irankiai">
+        <input class="paieskos" placeholder="🔍 Ieškoti kataloge kitos kortelės…">
+        <button class="mygtukas antras maza nauja-mygtukas">+ Nauja kortelė</button>
+      </div>
+      <div class="nauja-forma">
+        <span class="nauja-pastaba">Bus sukurta nauja kortelė. Pavadinimas — iš eilutės „Pavadinimas“ laukelio viršuje (pakoreguok jį ten). Kodą priskirs Pragma automatiškai iš eilės.</span>
+      </div>
+    </div>`;
+
+  // Pavadinimo laukas issitempia pagal teksta — kad matytusi VISAS pavadinimas
+  const isitempti = t => { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; };
+  let atnaujintiVad = null;   // vadybininko pardavimo eiles perpiesimas (priskiriama zemiau)
+
+  // laukai
+  el.querySelectorAll("[data-k]").forEach(inp => {
+    const k = inp.dataset.k;
+    inp.value = e[k] ?? "";
+    // APVALINIMAS EKRANE: vieneto kaina viduje tiksli (4 sk., kad kiekis x kaina
+    // sueitu su inkaruota suma), zmogui rodoma 2 sk. — tiksli reiksme uzvedus
+    if (k === "vnt_kaina" && e.vnt_kaina != null) {
+      inp.value = Math.round(e.vnt_kaina * 100) / 100;
+      if (Math.abs(e.vnt_kaina - inp.value) > 0.00001) inp.title = `tiksliai: ${e.vnt_kaina}`;
+    }
+    // PVM € eiluteje: skaiciuojasi pats; pagrindinis kelias — „Su PVM dokumente"
+    // apacioje, bet ranka irgi galima (užsakovo prasymas 09-07 „del visa ko") —
+    // ranka irasytas PVM inkaruojamas ir nebeperskaiciuojamas
+    if (k === "pvm_suma")
+      inp.title = "PVM skaičiuojasi pats (suma × tarifas). Centus paprasčiausia sulyginti apačioje „Su PVM dokumente“; įrašius ranka — lieka kaip įrašyta.";
+    // Suma uzrakinta tik SUSIETAI eilutei (sujungta / isskaidyta / paimta dalis /
+    // is jos paimta) — ten pinigai susideda su kita eilute. Vien inkaruota
+    // (kiekio keitimas sumos nejudina) — redaguoti galima, pvz. cento apvalinimui.
+    if (k === "suma" && eiluteSusieta(e)) {
+      inp.disabled = true;
+      inp.title = "Suma užrakinta — eilutė susieta su kita pozicija (sujungta/išskaidyta/paimta dalis). Keisk kiekį ar vnt. kainą — suma nepajudės.";
+    }
+    if (inp.tagName === "TEXTAREA") requestAnimationFrame(() => isitempti(inp));
+    inp.oninput = () => {
+      if (inp.tagName === "TEXTAREA") isitempti(inp);
+      e[k] = inp.type === "number" ? (inp.value === "" ? null : +inp.value) : inp.value;
+      // Kuriant nauja kortele jos vardas = eilutes pavadinimas (viena rasymo vieta)
+      if (k === "pavadinimas" && e.pasirinkimas && e.pasirinkimas.tipas === "nauja") {
+        e.pasirinkimas.pavadinimas = inp.value;
+        pieštiKorteliuBloka(el, e, true);
+      }
+      const inkaruota = e.suma_inkaruota || e.komponentai;
+      // VADYBININKUI inkaras VISADA eilutes suma be PVM is popieriaus (Pragmos agentas
+      // nr.31, užsakovo taisykle): kiekis keiciasi -> vieneto kaina = suma / kiekis
+      // (4 sk.), suma, PVM ir suma su PVM NEJUDA. Pardavimas seka nauja kieki.
+      const sumaStovi = inkaruota || window._vadybininkas;
+      if (k === "kiekis" || k === "vnt_kaina") {
+        if (sumaStovi) {
+          // SUMA UZRAKINTA (eilute susieta su kita pozicija: sujungta,
+          // isskaidyta ar paimta dalis): keiciant kieki ar kaina
+          // perskaiciuojamas KITAS laukas, o suma NEJUDA — pinigai susideda
+          if (k === "kiekis" && e.kiekis > 0) {
+            e.vnt_kaina = Math.round((+e.suma || 0) / e.kiekis * 10000) / 10000;
+            el.querySelector('[data-k="vnt_kaina"]').value = Math.round(e.vnt_kaina * 100) / 100;
+          } else if (k === "vnt_kaina" && e.vnt_kaina > 0) {
+            e.kiekis = Math.round((+e.suma || 0) / e.vnt_kaina * 1000) / 1000;
+            el.querySelector('[data-k="kiekis"]').value = e.kiekis;
+          }
+        } else if (e.kiekis != null && e.vnt_kaina != null) {
+          e.suma = Math.round(e.kiekis * e.vnt_kaina * 100) / 100;
+          el.querySelector('[data-k="suma"]').value = e.suma;
+        }
+      }
+      if (k === "suma" && e.kiekis) {
+        e.vnt_kaina = Math.round(e.suma / e.kiekis * 10000) / 10000;
+        el.querySelector('[data-k="vnt_kaina"]').value = Math.round(e.vnt_kaina * 100) / 100;
+      }
+      // Ranka irasytas PVM — inkaras (neperskaiciuojamas); istrynus — vel skaiciuojasi pats
+      if (k === "pvm_suma") {
+        if (e.pvm_suma != null) e.pvm_inkaruota = true;
+        else { delete e.pvm_inkaruota; if (e.suma != null && e.pvm_proc != null) { e.pvm_suma = Math.round(e.suma * e.pvm_proc) / 100; inp.value = e.pvm_suma; } }
+      }
+      // PVM € perskaiciuojamas pats, kai keiciasi suma ar tarifas; ranka
+      // pakoreguota PVM suma (k === "pvm_suma") NEperrasoma; inkaruotos
+      // eilutes PVM paskirstytas centu tikslumu — jo irgi nejudinam
+      if (k !== "pvm_suma" && k !== "pardavimo_be_pvm" && !inkaruota && !e.pvm_inkaruota && e.suma != null && e.pvm_proc != null) {
+        e.pvm_suma = Math.round(e.suma * e.pvm_proc) / 100;
+        el.querySelector('[data-k="pvm_suma"]').value = e.pvm_suma;
+      }
+      // Sutartinis ikainis: pardavimas = kiekis x ikainis, tai kiekiui pasikeitus
+      // pardavimo suma perskaiciuojama; ranka pakoregavus pardavima — rysys su
+      // sutarties pozicija nuimamas (kaina nebe pagal ikaini)
+      if (k === "kiekis" && e.pardavimo_ikainis) {
+        e.pardavimo_be_pvm = Math.round((+e.kiekis || 0) * e.pardavimo_ikainis * 100) / 100;
+        const pi = el.querySelector('[data-k="pardavimo_be_pvm"]');
+        if (pi) pi.value = e.pardavimo_be_pvm;
+      }
+      if (k === "pardavimo_be_pvm") { delete e.pardavimo_ikainis; delete e.pardavimo_pozicija; }
+      // Pardavimo VIENETO kaina inkaruota: kiekiui pasikeitus pardavimo suma
+      // = kiekis x vieneto kaina (marza ant vieneto — užsakovo taisykle)
+      if (k === "kiekis" && !e.pardavimo_ikainis && e.pardavimo_vnt != null)
+        e.pardavimo_be_pvm = Math.round((+e.kiekis || 0) * e.pardavimo_vnt * 100) / 100;
+      marza();
+      if (atnaujintiVad) atnaujintiVad();
+      perskaiciuoti();
+      pazymetiKeitima();
+    };
+  });
+
+  // Marzos zenkliukas prie pardavimo kainos (vadybininko rezimas):
+  // pardavimo be PVM lyginama su pirkimo suma be PVM toje pacioje eiluteje
+  const marza = () => {
+    const mz = el.querySelector(".marza-z");
+    if (!mz) return;
+    const p = +e.pardavimo_be_pvm, s = +e.suma;
+    mz.textContent = p > 0 && s > 0 ? (p >= s ? "+" : "") + Math.round((p - s) / s * 100) + "%" : "";
+  };
+  marza();
+
+  // VADYBININKO PARDAVIMO EILE: trys susieti ivedimai ANT VIENETO (be PVM, su
+  // PVM, marza %) — rasai bet kuri, kiti du ir sumos persiskaiciuoja. Kanoninis
+  // issaugomas dydis lieka pardavimo_be_pvm (eilutes SUMA, keliauja i XML
+  // <Suma>); pardavimo_vnt — vieneto inkaras (kiekiui keiciantis suma seka).
+  const vadPard = el.querySelector(".vad-pardavimas");
+  if (vadPard) {
+    const pvmK = () => 1 + (+e.pvm_proc || 0) / 100;
+    const pirkVnt = () => (+e.kiekis > 0 ? (+e.suma || 0) / +e.kiekis : (+e.vnt_kaina || 0));
+    const fmt = v => (v == null || !isFinite(+v)) ? "—" : (+v).toFixed(2).replace(".", ",");
+    // EKRANE 2 sk. po kablelio (užsakovo taisykle); viduje kainos lieka tikslios
+    const fmtK = v => (v == null || !isFinite(+v)) ? "" : (Math.round(+v * 100) / 100).toFixed(2).replace(".", ",");
+    const sk = v => { const n = parseFloat(String(v).replace(",", ".")); return isFinite(n) ? n : null; };
+    const vntBe = () => e.pardavimo_vnt != null ? +e.pardavimo_vnt
+      : (e.pardavimo_be_pvm != null && +e.kiekis > 0 ? Math.round(e.pardavimo_be_pvm / e.kiekis * 10000) / 10000 : null);
+    const nustatytiVnt = v => {   // v = vieneto kaina be PVM arba null (isvalyta)
+      if (v == null) { delete e.pardavimo_vnt; delete e.pardavimo_be_pvm; }
+      else {
+        e.pardavimo_vnt = Math.round(v * 10000) / 10000;
+        e.pardavimo_be_pvm = Math.round((+e.kiekis || 0) * e.pardavimo_vnt * 100) / 100;
+      }
+      delete e.pardavimo_ikainis; delete e.pardavimo_pozicija;   // rankinis ivedimas atsieja nuo sutarties
+    };
+    const inV = el.querySelector('[data-vp="vnt"]'), inS = el.querySelector('[data-vp="vnt_su"]'), inM = el.querySelector('[data-vp="marza"]');
+    const piesti = kilme => {
+      const pt = el.querySelector(".vad-pirkimo-tekstas");   // tik vadybininko isdestyme
+      if (pt) pt.innerHTML =
+        `× <b>${e.vnt_kaina != null ? (Math.round(+e.vnt_kaina * 10000) / 10000).toString().replace(".", ",") : "—"}</b> €/${escapeHtml(e.vienetas || "vnt")} = <b>${fmt(e.suma)} €</b> be PVM` +
+        ` · PVM ${fmtK(e.pvm_proc) || "0"}% ${fmt(e.pvm_suma)} · su PVM <b>${fmt((+e.suma || 0) + (+e.pvm_suma || 0))}</b>` +
+        (e.suma_inkaruota || e.komponentai ? ' <span class="pilka">· suma užrakinta</span>' : "");
+      const vb = vntBe(), pk = pirkVnt();
+      if (kilme !== "vnt") inV.value = vb != null ? fmtK(vb) : "";
+      if (kilme !== "vnt_su") inS.value = vb != null ? fmtK(vb * pvmK()) : "";
+      if (kilme !== "marza") inM.value = vb != null && pk > 0 ? String(Math.round((vb - pk) / pk * 1000) / 10).replace(".", ",") : "";
+      const tot = e.pardavimo_be_pvm;
+      el.querySelector(".vad-sumos").innerHTML = tot != null
+        ? `suma be PVM <b>${fmt(tot)} €</b> · su PVM <b>${fmt(Math.round(tot * pvmK() * 100) / 100)} €</b>${e.pardavimo_pozicija ? ` <span class="pilka">· 📑 ${escapeHtml(e.pardavimo_pozicija.slice(0, 40))}</span>` : ""}`
+        : `<span class="pilka">pardavimo kaina neįrašyta</span>`;
+    };
+    atnaujintiVad = () => piesti();
+    inV.oninput = () => { nustatytiVnt(sk(inV.value)); piesti("vnt"); perskaiciuoti(); pazymetiKeitima(); };
+    inS.oninput = () => { const v = sk(inS.value); nustatytiVnt(v == null ? null : v / pvmK()); piesti("vnt_su"); perskaiciuoti(); pazymetiKeitima(); };
+    inM.oninput = () => { const m = sk(inM.value); nustatytiVnt(m == null ? null : pirkVnt() * (1 + m / 100)); piesti("marza"); perskaiciuoti(); pazymetiKeitima(); };
+    // Sutarties pozicija: vieneto kaina = sutartinis ikainis
+    const nr = B && B.saskaita && B.saskaita.pardavimo_sutartis;
+    const sut = nr ? (window._sutartys || []).find(s => s.numeris === nr) : null;
+    if (sut && (sut.pozicijos || []).length) {
+      el.querySelector(".vad-sut").innerHTML = `<select class="sut-pozicija"><option value="">📑 sutarties pozicija…</option>${sut.pozicijos.map((p, j) =>
+        `<option value="${j}" ${e.pardavimo_pozicija === p.pavadinimas ? "selected" : ""}>${escapeHtml((p.pavadinimas || "?").slice(0, 60))} — ${(+p.ikainis_be_pvm).toFixed(2)} €/${escapeHtml(p.vienetas || "vnt")}</option>`).join("")}</select>`;
+      el.querySelector(".sut-pozicija").onchange = ev => {
+        const p = sut.pozicijos[+ev.target.value];
+        if (!p) { delete e.pardavimo_ikainis; delete e.pardavimo_pozicija; }
+        else {
+          e.pardavimo_ikainis = +p.ikainis_be_pvm; e.pardavimo_pozicija = p.pavadinimas;
+          e.pardavimo_vnt = +p.ikainis_be_pvm;
+          e.pardavimo_be_pvm = Math.round((+e.kiekis || 0) * e.pardavimo_ikainis * 100) / 100;
+        }
+        piesti(); perskaiciuoti(); pazymetiKeitima();
+      };
+    }
+    const vr = el.querySelector(".vad-redaguoti");
+    if (vr) vr.onclick = () => { const l = el.querySelector(".vad-pirkimo-laukai"); l.hidden = !l.hidden; };
+    piesti();
+  }
+
+  el.querySelector(".trinti").onclick = () => {
+    // Susieta eilute (paimta/atskirta is kitos): trinant pinigai GRIZTA i saltini
+    const saltinis = e.pinigai_is ? B.eilutes.find(x => x.eil_id === e.pinigai_is && x !== e) : null;
+    if (saltinis) {
+      if (!confirm(`Šalinti? ${(+e.suma || 0).toFixed(2)} € be PVM ir ${(+e.pvm_suma || 0).toFixed(2)} € PVM grįš atgal į „${(saltinis.pavadinimas || "").slice(0, 45)}“${e.grazinti_kieki ? " (kartu su kiekiu)" : ""}.`)) return;
+      const sC = _centai(saltinis.suma) + _centai(e.suma);
+      const pC = _centai(saltinis.pvm_suma) + _centai(e.pvm_suma);
+      saltinis.suma = sC / 100;
+      saltinis.pvm_suma = pC / 100;
+      // pardavimo suma (jei buvo irasyta) grizta i saltini kartu; saltinio
+      // rysys su sutarties ikainiu nuimamas — kaina nebe kiekis x ikainis
+      if (e.pardavimo_be_pvm != null || saltinis.pardavimo_be_pvm != null) {
+        saltinis.pardavimo_be_pvm = (_centai(saltinis.pardavimo_be_pvm) + _centai(e.pardavimo_be_pvm)) / 100;
+        if (e.pardavimo_be_pvm != null) { delete saltinis.pardavimo_ikainis; delete saltinis.pardavimo_pozicija; delete saltinis.pardavimo_vnt; }
+      }
+      if (e.grazinti_kieki && +e.kiekis > 0)
+        saltinis.kiekis = Math.round(((+saltinis.kiekis || 0) + +e.kiekis) * 1000) / 1000;
+      if (+saltinis.kiekis > 0)
+        saltinis.vnt_kaina = Math.round(sC / saltinis.kiekis * 100) / 10000;
+    } else if (!confirm("Šalinti šią eilutę?")) return;
+    B.eilutes.splice(i, 1);
+    pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  };
+
+  // 💸 nauja preke, pinigus paimant IS SITOS eilutes
+  el.querySelector(".nauja-is").onclick = () => naujaPrekeIsEilutes(e);
+
+  // ➗ apdalinti: sios eilutes suma isskirstyti kitoms pozicijoms
+  el.querySelector(".apdalinti").onclick = () => apdalintiEilute(e);
+
+  // ISSKAIDYMAS: kiekis dalinamas i dvi eilutes, pinigai pasiskirsto
+  // PROPORCINGAI centu tikslumu (likutis = visuma − dalis), tai bendros
+  // dokumento sumos NEPAJUDA — kitaip nei ranka keiciant kieki
+  el.querySelector(".skaidyti").onclick = () => {
+    const kiekis = +e.kiekis;
+    if (!(kiekis > 0)) { alert("Eilutė neturi kiekio — nėra ko išskaidyti."); return; }
+    if (e.komponentai && !confirm("Ši eilutė sujungta iš kelių — išskaidžius kiekį, „Išardyti“ nebeveiks. Tęsti?")) return;
+    const iv = prompt(`Kiek ${e.vienetas || "vnt"} atskirti į NAUJĄ eilutę? (dabar: ${kiekis})`, "");
+    if (iv === null) return;
+    const n = +String(iv).replace(",", ".");
+    if (!(n > 0 && n < kiekis)) { alert(`Reikia skaičiaus tarp 0 ir ${kiekis}.`); return; }
+    const sumaC = _centai(e.suma);
+    const pvmC = _centai(e.pvm_suma != null ? e.pvm_suma : (+e.suma || 0) * (+e.pvm_proc || 0) / 100);
+    const sumaBC = Math.round(sumaC * n / kiekis);
+    const pvmBC = Math.round(pvmC * n / kiekis);
+    // pardavimo suma (jei vadybininkas irase) skyla proporcingai kartu
+    const pardC = e.pardavimo_be_pvm != null ? _centai(e.pardavimo_be_pvm) : null;
+    const pardBC = pardC != null ? Math.round(pardC * n / kiekis) : null;
+    e.eil_id = e.eil_id || Math.random().toString(16).slice(2, 10);
+    const atskirta = { ...e, kiekis: n, suma: sumaBC / 100, pvm_suma: pvmBC / 100,
+      vnt_kaina: Math.round(sumaBC / n * 100) / 10000, suma_inkaruota: true,
+      pinigai_is: e.eil_id, grazinti_kieki: true,
+      rekomendacijos: e.rekomendacijos || [], rodomos: e.rodomos || [],
+      pasirinkimas: e.pasirinkimas ? { ...e.pasirinkimas } : null, naujaAktyvi: false };
+    delete atskirta.komponentai;
+    delete atskirta.eil_id;
+    if (pardC != null) atskirta.pardavimo_be_pvm = pardBC / 100;
+    e.kiekis = Math.round((kiekis - n) * 1000) / 1000;
+    e.suma = (sumaC - sumaBC) / 100;
+    e.pvm_suma = (pvmC - pvmBC) / 100;
+    if (pardC != null) e.pardavimo_be_pvm = (pardC - pardBC) / 100;
+    e.suma_inkaruota = true;
+    e.vnt_kaina = Math.round((sumaC - sumaBC) / e.kiekis * 100) / 10000;
+    delete e.komponentai;
+    B.eilutes.splice(B.eilutes.indexOf(e) + 1, 0, atskirta);
+    pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  };
+
+  // SUJUNGIMO varnele: pazymetos eilutes sutraukiamos i viena (mygtukas apacioje)
+  const varne = el.querySelector(".sujungti-varne");
+  varne.checked = window._sujungimoZymos.has(e);
+  varne.onchange = () => {
+    varne.checked ? window._sujungimoZymos.add(e) : window._sujungimoZymos.delete(e);
+    atnaujintiSujungimoMygtuka();
+  };
+
+  // ISARDYMAS: sujungta eilute pakeiciama originaliais komponentais — sumos
+  // grizta tiksliai tokios, kokios buvo (jie issaugoti pilni)
+  const isard = el.querySelector(".isardyti");
+  if (isard) isard.onclick = () => {
+    if (!confirm(`Išardyti „${(e.pavadinimas || "").slice(0, 50)}" atgal į ${e.komponentai.length} eilutes?`)) return;
+    const vieta = B.eilutes.indexOf(e);
+    B.eilutes.splice(vieta, 1, ...e.komponentai.map(k => ({ ...k, rodomos: k.rekomendacijos || [] })));
+    window._sujungimoZymos.delete(e);
+    pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  };
+
+  // Pasiūlymo eilučių susiejimo UI IŠIMTAS (užsakovo sprendimas 2026-08-30):
+  // sąsajos atsiras vadybininkų etape, jų lange — apskaitos ekrane jų nebūna.
+
+  // nauja kortele (atstatoma ir is issaugoto parinkimo).
+  // Korteles pavadinimas = eilutes "Pavadinimas" laukelis (viena rasymo vieta).
+  const naujaForma = el.querySelector(".nauja-forma");
+  if (e.naujaAktyvi && e.pasirinkimas && e.pasirinkimas.tipas === "nauja") {
+    naujaForma.classList.add("aktyvi");
+  }
+  el.querySelector(".nauja-mygtukas").onclick = () => {
+    e.naujaAktyvi = !e.naujaAktyvi;
+    naujaForma.classList.toggle("aktyvi", e.naujaAktyvi);
+    if (e.naujaAktyvi) {
+      // Kodo neprasom — ji priskiria Pragma is eiles. Mes duodam tik pavadinima.
+      e.pasirinkimas = { tipas: "nauja", kodas: "", pavadinimas: e.pavadinimas || "" };
+    } else if (e.pasirinkimas && e.pasirinkimas.tipas === "nauja") {
+      e.pasirinkimas = null;
+    }
+    pieštiKorteliuBloka(el, e);
+    pazymetiKeitima();
+  };
+
+  // paieska
+  let laikmatis = null;
+  el.querySelector(".paieskos").oninput = ev => {
+    clearTimeout(laikmatis);
+    const t = ev.target.value.trim();
+    laikmatis = setTimeout(async () => {
+      if (t.length < 2) { e.rodomos = e.rekomendacijos; pieštiKorteliuBloka(el, e); return; }
+      try {
+        const r = await fetch("/api/paieska", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tekstas: t, vienetas: e.vienetas || "" }) });
+        if (r.ok) { e.rodomos = (await r.json()).rezultatai; pieštiKorteliuBloka(el, e); }
+      } catch (_) {}
+    }, 350);
+  };
+
+  pieštiKorteliuBloka(el, e);
+  return el;
+}
+
+function pieštiKorteliuBloka(el, e, tikZymelis) {
+  const zym = el.querySelector(".pasirinkta-kortele");
+  const p = e.pasirinkimas;
+  if (p && p.tipas === "atmintis") {
+    let pokytis = "";
+    if (e.atmintis && e.atmintis.savikaina != null && e.vnt_kaina != null && Math.abs(e.vnt_kaina - e.atmintis.savikaina) > 0.005)
+      pokytis = ` <span class="savikainos-pokytis">⚠ savikaina buvo ${(+e.atmintis.savikaina).toFixed(2)}, dabar ${(+e.vnt_kaina).toFixed(2)}</span>`;
+    zym.innerHTML = `<span class="zymelis violetinis">🧠 Iš atminties</span> <b style="font-family:Consolas,monospace">${escapeHtml(p.kodas)}</b> ${escapeHtml(p.pavadinimas)}${pokytis}`;
+  }
+  else if (p && p.tipas === "kat")
+    zym.innerHTML = `<span class="zymelis zalias">✓ Kortelė parinkta</span> <b style="font-family:Consolas,monospace">${escapeHtml(p.kodas)}</b> ${escapeHtml(p.pavadinimas)}`;
+  else if (p && p.tipas === "nauja")
+    zym.innerHTML = `<span class="zymelis melynas">＋ Nauja kortelė</span> <b style="font-family:Consolas,monospace">${escapeHtml(p.kodas || "kodą duos Pragma")}</b> ${escapeHtml(p.pavadinimas || "")}`;
+  else
+    zym.innerHTML = `<span class="zymelis pilkas">Kortelė neparinkta</span> <span style="color:var(--pilkas)">— į XML eis tiekėjo kodas / EAN${e.bendrinis_pavadinimas ? ` · AI supranta: „${escapeHtml(e.bendrinis_pavadinimas)}“` : ""}</span>`;
+  if (tikZymelis) return;
+
+  const sarasas = el.querySelector(".rek-sarasas");
+  sarasas.innerHTML = "";
+  const virsus = e.rodomos && e.rodomos.length ? e.rodomos[0].balas : 0;
+  (e.rodomos || []).forEach(r => {
+    const m = document.createElement("button");
+    m.type = "button";
+    m.className = "rek" + (r.zemiau_luzio ? " blanki" : "") + (p && (p.tipas === "kat" || p.tipas === "atmintis") && p.kodas === r.kodas ? " parinkta" : "");
+    const balKlase = virsus > 0 && r.balas >= virsus * 0.8 && !r.zemiau_luzio ? "geras" : "vidutinis";
+    const vntSutampa = r.vienetas && e.vienetas && r.vienetas.toLowerCase().replace(".", "") === String(e.vienetas).toLowerCase().replace(".", "");
+    m.innerHTML = `<span class="balas ${balKlase}">${r.balas.toFixed(2)}</span><span class="kodas">${escapeHtml(r.kodas)}</span><span class="pav">${escapeHtml(r.pavadinimas)}</span>${r.vienetas ? `<span class="zymelis ${vntSutampa ? "melynas" : "pilkas"}" title="Kortelės matas">${escapeHtml(r.vienetas)}</span>` : ""}<span class="zyme">${escapeHtml(r.zyme)}</span>`;
+    m.onclick = () => {
+      if (p && p.tipas === "kat" && p.kodas === r.kodas) e.pasirinkimas = null;
+      else e.pasirinkimas = { tipas: "kat", kodas: r.kodas, pavadinimas: r.pavadinimas };
+      e.naujaAktyvi = false;
+      el.querySelector(".nauja-forma").classList.remove("aktyvi");
+      pieštiKorteliuBloka(el, e);
+      pazymetiKeitima();
+    };
+    sarasas.appendChild(m);
+  });
+}
+
+$("#prideti-eilute").onclick = () => {
+  B.eilutes.push({ pavadinimas: "", tiekejo_kodas: "", ean: "", kiekis: 1, vienetas: "vnt", vnt_kaina: null, suma: null, pvm_proc: 21, pvm_suma: null, rekomendacijos: [], rodomos: [], pasirinkimas: null, naujaAktyvi: false });
+  pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+};
+
+$("#sujungti-eilutes").onclick = sujungtiPazymetas;
+
+// ➗ APDALINIMAS: vienos eilutes suma isskirstoma pasirinktoms pozicijoms
+// (po lygiai arba proporcingai), o pati eilute ISNYKSTA. Centai dalinami
+// taip, kad susideti VISADA: likutis atitenka paskutinei — bendra dokumento
+// suma nepajuda ne per centa. Gaves pozicijas suma tampa INKARUOTA.
+function apdalintiEilute(saltinis) {
+  if (!B) return;
+  const kitos = B.eilutes.filter(x => x !== saltinis);
+  if (!kitos.length) { alert("Nėra kitų eilučių, kurioms paskirstyti."); return; }
+  const sC = _centai(saltinis.suma);
+  const pC = _centai(saltinis.pvm_suma != null ? saltinis.pvm_suma : (+saltinis.suma || 0) * (+saltinis.pvm_proc || 0) / 100);
+  const prC = saltinis.pardavimo_be_pvm != null ? _centai(saltinis.pardavimo_be_pvm) : null;
+  if (!(sC > 0)) { alert("Eilutė be sumos — nėra ko paskirstyti."); return; }
+  const fonas = document.createElement("div");
+  fonas.style.cssText = "position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:20px";
+  fonas.innerHTML = `<div style="background:var(--korta,#fff); color:inherit; border-radius:12px; padding:18px 20px; width:min(640px,95vw); display:flex; flex-direction:column; gap:10px">
+    <b>➗ Apdalinti „${escapeHtml((saltinis.pavadinimas || "?").slice(0, 45))}“</b>
+    <div style="font-size:12.5px; color:var(--pilkas)">${(sC / 100).toFixed(2)} € be PVM (+${(pC / 100).toFixed(2)} € PVM) išsiskirstys pažymėtoms pozicijoms, o pati eilutė IŠNYKS. Bendra dokumento suma nepajudės.</div>
+    <div style="display:flex; gap:16px; font-size:12.5px">
+      <label style="display:flex; gap:5px; align-items:center"><input type="radio" name="apd-budas" value="lygiai" checked> Po lygiai</label>
+      <label style="display:flex; gap:5px; align-items:center"><input type="radio" name="apd-budas" value="prop"> Proporcingai pagal sumas</label>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:4px; max-height:44vh; overflow:auto">
+      ${kitos.map((x, j) => `<label style="display:flex; gap:8px; align-items:center; font-size:13px; padding:4px 8px; border:1px solid var(--linija); border-radius:8px; cursor:pointer">
+        <input type="checkbox" class="apd-varne" data-j="${j}" checked>
+        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml((x.pavadinimas || "?").slice(0, 50))}</span>
+        <span style="color:var(--pilkas); font-size:12px">${(+x.suma || 0).toFixed(2)} €</span>
+        <b class="apd-dalis" data-j="${j}" style="min-width:86px; text-align:right; color:var(--zalia)"></b>
+      </label>`).join("")}
+    </div>
+    <div id="apd-klaida" style="color:var(--raudona); font-size:12.5px"></div>
+    <div style="display:flex; gap:10px; justify-content:flex-end">
+      <button class="mygtukas antras" id="apd-atsaukti">Atšaukti</button>
+      <button class="mygtukas" id="apd-vykdyti">Apdalinti</button>
+    </div>
+  </div>`;
+  fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+  document.body.appendChild(fonas);
+  fonas.querySelector("#apd-atsaukti").onclick = () => fonas.remove();
+
+  const dalys = () => {
+    const varnes = [...fonas.querySelectorAll(".apd-varne")].filter(c => c.checked);
+    if (!varnes.length) return null;
+    const pazym = varnes.map(c => ({ j: +c.dataset.j, x: kitos[+c.dataset.j] }));
+    const budas = fonas.querySelector('input[name="apd-budas"]:checked').value;
+    const sD = [], pD = [], prD = [];
+    if (budas === "lygiai") {
+      const n = pazym.length, bs = Math.floor(sC / n), bp = Math.floor(pC / n);
+      pazym.forEach((_, i) => { sD.push(bs + (i < sC - bs * n ? 1 : 0)); pD.push(bp + (i < pC - bp * n ? 1 : 0)); });
+      if (prC != null) {
+        const br = Math.floor(prC / n);
+        pazym.forEach((_, i) => prD.push(br + (i < prC - br * n ? 1 : 0)));
+      }
+    } else {
+      const visoC = pazym.reduce((a, p) => a + _centai(p.x.suma), 0) || 1;
+      let likS = sC, likP = pC, likR = prC;
+      pazym.forEach((p, i) => {
+        if (i === pazym.length - 1) { sD.push(likS); pD.push(likP); if (prC != null) prD.push(likR); return; }
+        const ds = Math.round(sC * _centai(p.x.suma) / visoC), dp = Math.round(pC * _centai(p.x.suma) / visoC);
+        sD.push(ds); pD.push(dp); likS -= ds; likP -= dp;
+        if (prC != null) { const dr = Math.round(prC * _centai(p.x.suma) / visoC); prD.push(dr); likR -= dr; }
+      });
+    }
+    return { pazym, sD, pD, prD };
+  };
+  const perziura = () => {
+    const d = dalys();
+    fonas.querySelectorAll(".apd-dalis").forEach(el2 => { el2.textContent = ""; });
+    if (d) d.pazym.forEach((p, i) => {
+      fonas.querySelector(`.apd-dalis[data-j="${p.j}"]`).textContent = "+" + (d.sD[i] / 100).toFixed(2) + " €";
+    });
+  };
+  perziura();
+  fonas.querySelectorAll(".apd-varne, input[name='apd-budas']").forEach(c => { c.onchange = perziura; });
+
+  fonas.querySelector("#apd-vykdyti").onclick = () => {
+    const d = dalys();
+    if (!d) { fonas.querySelector("#apd-klaida").textContent = "Pažymėk bent vieną poziciją."; return; }
+    d.pazym.forEach((p, i) => {
+      const x = p.x;
+      const ns = _centai(x.suma) + d.sD[i];
+      const np = _centai(x.pvm_suma != null ? x.pvm_suma : (+x.suma || 0) * (+x.pvm_proc || 0) / 100) + d.pD[i];
+      x.suma = ns / 100;
+      x.pvm_suma = np / 100;
+      x.suma_inkaruota = true;
+      if (prC != null) {
+        x.pardavimo_be_pvm = (_centai(x.pardavimo_be_pvm) + d.prD[i]) / 100;
+        // gavo pinigu ne pagal ikaini — rysys su sutarties pozicija ir vieneto inkaras nuimami
+        delete x.pardavimo_ikainis; delete x.pardavimo_pozicija; delete x.pardavimo_vnt;
+      }
+      if (+x.kiekis > 0) x.vnt_kaina = Math.round(ns / x.kiekis * 100) / 10000;
+    });
+    B.eilutes.splice(B.eilutes.indexOf(saltinis), 1);
+    fonas.remove();
+    pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  };
+}
+
+// NAUJA PREKE IS EILUTES (💸 mygtukas ant eilutes): sukuriama visiskai atskira
+// eilute (pvz. letiklis), o jos pinigai PROPORCINGAI paimami is TOS eilutes —
+// saltinio suma sumazeja lygiai tiek, kiek gauna nauja, PVM persikelia
+// proporcingai, tai bendros dokumento sumos NEPAJUDA ne per centa.
+function naujaPrekeIsEilutes(saltinis) {
+  if (!B || !saltinis) return;
+  const nrEil = B.eilutes.indexOf(saltinis) + 1;
+  const fonas = document.createElement("div");
+  fonas.style.cssText = "position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:20px";
+  fonas.innerHTML = `<div style="background:var(--korta,#fff); color:inherit; border-radius:12px; padding:18px 20px; width:min(560px,95vw); display:flex; flex-direction:column; gap:10px">
+    <b>💸 Nauja prekė iš ${nrEil} pozicijos</b>
+    <div style="font-size:12.5px; color:var(--pilkas)">Iš: ${escapeHtml((saltinis.pavadinimas || "?").slice(0, 60))} — ${(+saltinis.suma || 0).toFixed(2)} € be PVM</div>
+    <label style="font-size:12px; color:var(--pilkas)">Naujos prekės pavadinimas</label>
+    <input id="nip-pavadinimas" style="padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit">
+    <div style="display:flex; gap:10px">
+      <div style="width:80px"><label style="font-size:12px; color:var(--pilkas)">Kiekis</label>
+        <input id="nip-kiekis" type="number" step="any" value="1" style="width:100%; padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit"></div>
+      <div style="width:70px"><label style="font-size:12px; color:var(--pilkas)">Vnt.</label>
+        <input id="nip-vienetas" value="vnt" style="width:100%; padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit"></div>
+      <div style="flex:1"><label style="font-size:12px; color:var(--pilkas)">Vnt. kaina be PVM</label>
+        <input id="nip-kaina" type="number" step="any" style="width:100%; padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit"></div>
+      <div style="flex:1"><label style="font-size:12px; color:var(--pilkas)"><b>BENDRA suma be PVM</b> (tiek nusiims)</label>
+        <input id="nip-suma" type="number" step="any" style="width:100%; padding:7px 9px; border:1px solid var(--linija); border-radius:8px; background:var(--korta); color:inherit"></div>
+    </div>
+    <div id="nip-klaida" style="color:var(--raudona); font-size:12.5px"></div>
+    <div style="display:flex; gap:10px; justify-content:flex-end">
+      <button class="mygtukas antras" id="nip-atsaukti">Atšaukti</button>
+      <button class="mygtukas" id="nip-sukurti">Sukurti</button>
+    </div>
+  </div>`;
+  fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+  document.body.appendChild(fonas);
+  fonas.querySelector("#nip-atsaukti").onclick = () => fonas.remove();
+  fonas.querySelector("#nip-pavadinimas").focus();
+  // Kiekis x vnt. kaina = BENDRA suma (kaip eiluteje): pildant kaina, suma
+  // susiskaiciuoja pati; pildant suma — perskaiciuojama kaina. Nusiimama BENDRA.
+  {
+    const kI = fonas.querySelector("#nip-kiekis"), kaI = fonas.querySelector("#nip-kaina"), sI = fonas.querySelector("#nip-suma");
+    const sk = v => +String(v).replace(",", ".") || 0;
+    kI.oninput = kaI.oninput = () => {
+      if (sk(kI.value) > 0 && sk(kaI.value) > 0)
+        sI.value = Math.round(sk(kI.value) * sk(kaI.value) * 100) / 100;
+    };
+    sI.oninput = () => {
+      if (sk(kI.value) > 0 && sk(sI.value) > 0)
+        kaI.value = Math.round(sk(sI.value) / sk(kI.value) * 10000) / 10000;
+    };
+  }
+  fonas.querySelector("#nip-sukurti").onclick = () => {
+    const klaida = t => { fonas.querySelector("#nip-klaida").textContent = t; };
+    const pavadinimas = fonas.querySelector("#nip-pavadinimas").value.trim();
+    if (!pavadinimas) return klaida("Įrašyk naujos prekės pavadinimą.");
+    const sumaC = _centai(+String(fonas.querySelector("#nip-suma").value).replace(",", "."));
+    const sC = _centai(saltinis.suma);
+    if (!(sumaC > 0)) return klaida("Įrašyk perkeliamą sumą.");
+    if (sumaC >= sC) return klaida(`Suma turi būti mažesnė nei pozicijos ${(sC / 100).toFixed(2)} € (visai sumai — tiesiog pervadink eilutę).`);
+    const kiekis = +String(fonas.querySelector("#nip-kiekis").value).replace(",", ".") || 1;
+    if (saltinis.komponentai && !confirm("Pasirinkta pozicija sujungta iš kelių — paėmus dalį sumos, „Išardyti“ nebeveiks. Tęsti?")) return;
+    const pC = _centai(saltinis.pvm_suma != null ? saltinis.pvm_suma : (+saltinis.suma || 0) * (+saltinis.pvm_proc || 0) / 100);
+    const pvmC = Math.round(pC * sumaC / sC);   // PVM persikelia proporcingai
+    // pardavimo suma (jei irasyta) persikelia ta pacia proporcija
+    const prC = saltinis.pardavimo_be_pvm != null ? _centai(saltinis.pardavimo_be_pvm) : null;
+    const prBC = prC != null ? Math.round(prC * sumaC / sC) : null;
+    saltinis.suma = (sC - sumaC) / 100;
+    saltinis.pvm_suma = (pC - pvmC) / 100;
+    if (prC != null) {
+      saltinis.pardavimo_be_pvm = (prC - prBC) / 100;
+      // pinigai isejo ne pagal ikaini — rysys su sutarties pozicija ir vieneto inkaras nebegalioja
+      delete saltinis.pardavimo_ikainis; delete saltinis.pardavimo_pozicija; delete saltinis.pardavimo_vnt;
+    }
+    if (+saltinis.kiekis > 0)
+      saltinis.vnt_kaina = Math.round((sC - sumaC) / saltinis.kiekis * 100) / 10000;
+    delete saltinis.komponentai;
+    // Abi puses INKARUOTOS: velesnis kiekio/kainos redagavimas sumos nebejudina.
+    // eil_id + pinigai_is: istrynus nauja eilute, pinigai GRIZTA i saltini.
+    saltinis.suma_inkaruota = true;
+    saltinis.eil_id = saltinis.eil_id || Math.random().toString(16).slice(2, 10);
+    const nauja = {
+      pavadinimas, tiekejo_kodas: "", ean: "",
+      kiekis, vienetas: fonas.querySelector("#nip-vienetas").value.trim() || "vnt",
+      vnt_kaina: Math.round(sumaC / kiekis * 100) / 10000, suma: sumaC / 100,
+      pvm_proc: saltinis.pvm_proc, pvm_suma: pvmC / 100, suma_inkaruota: true,
+      pinigai_is: saltinis.eil_id,
+      ...(prC != null ? { pardavimo_be_pvm: prBC / 100 } : {}),
+      rekomendacijos: [], rodomos: [], pasirinkimas: null, naujaAktyvi: false,
+    };
+    B.eilutes.splice(B.eilutes.indexOf(saltinis) + 1, 0, nauja);
+    fonas.remove();
+    pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+    rekomendacijosEilutei(nauja);   // korteles NAUJAM pavadinimui
+  };
+};
+
+// ── Sumos ────────────────────────────────────────────────────────────────
+function perskaiciuoti() {
+  if (!B) return;
+  const neto = B.eilutes.reduce((s, e) => s + (+e.suma || 0), 0);
+  // PVM = eiluciu "PVM €" suma (apskaitininke gali koreguoti centus pagal dokumenta)
+  const pvm = B.eilutes.reduce((s, e) => s + (e.pvm_suma != null ? +e.pvm_suma
+    : Math.round((+e.suma || 0) * (+e.pvm_proc || 0)) / 100), 0);
+  const viso = neto + pvm;
+  // Bendra PARDAVIMO suma (vadybininko kainos) — matoma ir apskaitai:
+  // bendras vaizdas „kaip uzpajamuota ir uz kiek parduodama"
+  const pardC = B.eilutes.reduce((s, e) => s + (e.pardavimo_be_pvm != null ? _centai(e.pardavimo_be_pvm) : 0), 0);
+  const dNeto = B.saskaita.suma_be_pvm, dViso = B.saskaita.suma_su_pvm;
+  const ok = dViso == null || Math.abs(viso - dViso) <= 0.05 + 0.01 * B.eilutes.length;
+  // Eiluciu PVM per centa nuo formules NEzymimas (Pragmos agentas nr.30: inkaras —
+  // popierius, ne formule; importas raso tai, ka siunciam). Zymima tik kai
+  // eiluciu sumos nesueina su dokumento antraste (zemiau: „⚠ dokumente").
+  $("#sumu-blokas").innerHTML =
+    `<span>Be PVM: <b>${sk2(neto)}</b></span><span>PVM: <b>${sk2(pvm)}</b></span><span>VISO: <b>${sk2(viso)}</b></span>` +
+    (pardC > 0 ? `<span style="color:var(--zalia)">💰 Pardavimui: <b>${(pardC / 100).toFixed(2)}</b> be PVM</span>` : "") +
+    (dViso != null ? `<span class="${ok ? "sutampa" : "nesutampa-t"}">${ok ? "✓ sutampa su dokumentu" : `⚠ dokumente: ${sk2(dNeto)} / ${sk2(dViso)}`}</span>` : "");
+  document.querySelectorAll("#eilutes .eilute .pvm-skiriasi").forEach(inp => inp.classList.remove("pvm-skiriasi"));
+  // „Su PVM dokumente" laukas: rodo dokumento suma (arba apskaiciuota), kol zmogus nerasos
+  const spl = $("#su-pvm-dok");
+  if (spl && document.activeElement !== spl) spl.value = dViso != null ? sk2(dViso) : sk2(viso);
+}
+
+// PVM KOREGAVIMAS PER BENDRA SUMA SU PVM (apskaitininkiu prasymas): irasoma
+// dokumento suma su PVM; skirtumas nuo apskaiciuoto PVM (tiekejo apvalinimas)
+// centu tikslumu isskirstomas eilutems proporcingai ju PVM, likutis — ant
+// didziausios. Vieneto kainos ir sumos be PVM NEJUDA. Pakoreguotos eilutes
+// PVM inkaruojamas — velesni redagavimai jo neperrasys.
+// Eilute SUSIETA su kita (sujungta / isskaidyta / paimta dalis / is jos paimta):
+// jos pinigai susideda su kita eilute — sumos ranka nejudinam
+function eiluteSusieta(e) {
+  return !!((e.komponentai && e.komponentai.length) || e.pinigai_is
+    || (e.eil_id && (B ? B.eilutes : []).some(x => x !== e && x.pinigai_is === e.eil_id)));
+}
+function pritaikytiSuPvm(v) {
+  if (!B || !B.eilutes.length) return;
+  const norimas = _centai(v);
+  let netoC = B.eilutes.reduce((s, e) => s + _centai(e.suma), 0);
+  // 1) SUMA BE PVM pagal dokumenta: jei AI nuskaite dokumento suma be PVM ir
+  //    eilutes skiriasi tik apvalinimu (iki 5 ct + 1 ct eilutei) — skirtumas
+  //    dedamas ant didziausios NESUSIETOS eilutes (vnt. kaina perskaiciuojama
+  //    4 sk., PVM tos eilutes — is naujo, jei neinkaruotas)
+  const dokNetoC = B.saskaita.suma_be_pvm != null ? _centai(B.saskaita.suma_be_pvm) : null;
+  if (dokNetoC != null && dokNetoC !== netoC && Math.abs(dokNetoC - netoC) <= 5 + B.eilutes.length) {
+    const laisvos = B.eilutes.filter(e => !eiluteSusieta(e) && _centai(e.suma) > 0);
+    if (laisvos.length) {
+      const didz = laisvos.reduce((a, b) => _centai(a.suma) >= _centai(b.suma) ? a : b);
+      didz.suma = (_centai(didz.suma) + (dokNetoC - netoC)) / 100;
+      if (+didz.kiekis > 0) didz.vnt_kaina = Math.round(didz.suma / didz.kiekis * 10000) / 10000;
+      if (!didz.pvm_inkaruota && didz.pvm_proc != null) didz.pvm_suma = Math.round(didz.suma * didz.pvm_proc) / 100;
+      netoC = dokNetoC;
+      const el = document.querySelectorAll("#eilutes .eilute")[B.eilutes.indexOf(didz)];
+      if (el) {
+        const s = el.querySelector('[data-k="suma"]'), vk = el.querySelector('[data-k="vnt_kaina"]'), pv = el.querySelector('[data-k="pvm_suma"]');
+        if (s) s.value = didz.suma;
+        if (vk) vk.value = Math.round(didz.vnt_kaina * 100) / 100;
+        if (pv) pv.value = didz.pvm_suma ?? "";
+      }
+    }
+  }
+  const pvmDabar = e => _centai(e.pvm_suma != null ? e.pvm_suma : (+e.suma || 0) * (+e.pvm_proc || 0) / 100);
+  const dabarC = B.eilutes.reduce((s, e) => s + pvmDabar(e), 0);
+  const skirtumas = (norimas - netoC) - dabarC;
+  if (norimas < netoC) { alert(`Suma su PVM (${sk2(v)}) mažesnė už sumą be PVM (${(netoC / 100).toFixed(2)}) — patikrink skaičių.`); perskaiciuoti(); return; }
+  B.saskaita.suma_su_pvm = norimas / 100;
+  if (skirtumas !== 0) {
+    if (Math.abs(skirtumas) > 100 && !confirm(`Skirtumas nuo apskaičiuoto PVM — ${(skirtumas / 100).toFixed(2)} €. Tai daugiau nei apvalinimas. Vis tiek išskirstyti ant PVM?`)) { perskaiciuoti(); return; }
+    // proporcingai pagal eiluciu PVM, likutis — didziausiai
+    let likutis = skirtumas;
+    const eil = B.eilutes.filter(e => pvmDabar(e) > 0);
+    const baze = eil.reduce((s, e) => s + pvmDabar(e), 0) || 1;
+    const dalys = eil.map(e => Math.trunc(skirtumas * pvmDabar(e) / baze));
+    dalys.forEach(d => { likutis -= d; });
+    if (eil.length) {
+      const didz = eil.reduce((a, b) => pvmDabar(a) >= pvmDabar(b) ? a : b);
+      dalys[eil.indexOf(didz)] += likutis;
+    } else if (B.eilutes.length) {
+      // visos su 0 PVM — skirtuma dedam ant pirmos eilutes
+      eil.push(B.eilutes[0]); dalys.push(skirtumas);
+    }
+    eil.forEach((e, i) => { e.pvm_suma = (pvmDabar(e) + dalys[i]) / 100; e.pvm_inkaruota = true; });
+    document.querySelectorAll("#eilutes .eilute").forEach((el, i) => {
+      const inp = el.querySelector('[data-k="pvm_suma"]');
+      if (inp && B.eilutes[i]) inp.value = B.eilutes[i].pvm_suma ?? "";
+    });
+  }
+  perskaiciuoti(); pazymetiKeitima();
+}
+document.getElementById("su-pvm-dok").onchange = () => {
+  const v = +String(document.getElementById("su-pvm-dok").value).replace(",", ".");
+  if (isFinite(v)) pritaikytiSuPvm(v);
+};
+// Mygtukas — kai laukelio reiksme jau tokia, kokia dokumente (onchange nesuveikia),
+// bet eilutes centais skiriasi (pvz. be PVM 97,69 vs dokumente 97,70)
+document.getElementById("su-pvm-taikyti").onclick = () => {
+  if (!B) return;
+  const v = +String(document.getElementById("su-pvm-dok").value).replace(",", ".");
+  if (isFinite(v) && v > 0) pritaikytiSuPvm(v);
+};
+
+// ── XML ──────────────────────────────────────────────────────────────────
+function vienetasXml(v) {
+  v = (v || "vnt").trim();
+  if (/^[a-ząčęėįšųūž]+$/i.test(v)) { v = v.toUpperCase(); if (!v.endsWith(".")) v += "."; }
+  return v;
+}
+
+// ── SUTARTINIAI IKAINIAI (vadybininkui): pasirenki sutarti, tada prie
+// eiluciu pritrauki jos pozicijas — pardavimas = kiekis x ikainis ──
+async function uzkrautiSutartis() {
+  if (window._sutartys) return window._sutartys;
+  try {
+    const r = await fetch("/api/sutartys");
+    window._sutartys = (await r.json()).sutartys || [];
+  } catch (_) { window._sutartys = []; }
+  return window._sutartys;
+}
+
+function atnaujintiSutartiesMygtuka() {
+  const m = $("#sutarties-mygtukas");
+  if (!m) return;
+  const nr = B && B.saskaita && B.saskaita.pardavimo_sutartis;
+  m.textContent = nr ? `📑 Sutartis: ${nr}` : "📑 Sutartis";
+}
+
+$("#sutarties-mygtukas").onclick = async () => {
+  if (!B) return;
+  const sut = await uzkrautiSutartis();
+  if (!sut.length) { alert("Sutarčių sistemoje dar nėra — pirmiausia reikia įkelti sutarties įkainius."); return; }
+  const fonas = document.createElement("div");
+  fonas.style.cssText = "position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; padding:20px";
+  fonas.innerHTML = `<div style="background:var(--korta,#fff); color:inherit; border-radius:12px; padding:18px 20px; width:min(560px,95vw); display:flex; flex-direction:column; gap:8px">
+    <b>📑 Kurios sutarties įkainius naudoti šiai sąskaitai?</b>
+    ${sut.map(s => `<button class="sut-rinktis mygtukas antras" data-nr="${escapeHtml(s.numeris || "")}" style="justify-content:flex-start; text-align:left">
+      <b>${escapeHtml(s.numeris || "be numerio")}</b>&nbsp;— ${escapeHtml((s.tiekejas || "").slice(0, 40))} <span style="color:var(--pilkas)">(${(s.pozicijos || []).length} poz.)</span>
+    </button>`).join("")}
+    <button class="sut-rinktis mygtukas antras" data-nr="" style="justify-content:flex-start">— be sutarties —</button>
+  </div>`;
+  fonas.onclick = ev => { if (ev.target === fonas) fonas.remove(); };
+  document.body.appendChild(fonas);
+  fonas.querySelectorAll(".sut-rinktis").forEach(m2 => {
+    m2.onclick = () => {
+      if (m2.dataset.nr) B.saskaita.pardavimo_sutartis = m2.dataset.nr;
+      else delete B.saskaita.pardavimo_sutartis;
+      fonas.remove();
+      atnaujintiSutartiesMygtuka();
+      pieštiEilutes(); pazymetiKeitima();
+    };
+  });
+};
+
+$("#marza-visoms").onclick = () => {
+  if (!B) return;
+  const iv = prompt("Marža % VISOMS eilutėms (pardavimas = pirkimo suma + marža).\nEilutės su parinkta sutarties pozicija nekeičiamos.", "");
+  if (iv === null) return;
+  const p = +String(iv).replace(",", ".");
+  if (!isFinite(p)) { alert("Įrašyk procentą skaičiumi (pvz. 15)."); return; }
+  // Marza dedama ANT VIENETO: vieneto pardavimo kaina = pirkimo vieneto kaina x (1+%),
+  // eilutes suma = kiekis x vieneto kaina
+  B.eilutes.forEach(e => {
+    if (e.pardavimo_ikainis) return;
+    const pk = +e.kiekis > 0 ? (+e.suma || 0) / +e.kiekis : (+e.vnt_kaina || 0);
+    e.pardavimo_vnt = Math.round(pk * (1 + p / 100) * 10000) / 10000;
+    e.pardavimo_be_pvm = Math.round((+e.kiekis || 0) * e.pardavimo_vnt * 100) / 100;
+  });
+  pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+};
+
+// ── VADYBININKO PERDAVIMAS: vietoje XML mygtuko — „Perduoti apskaitai" ──
+function atnaujintiPerdavimoMygtuka() {
+  const pm = $("#perduoti-apskaitai"), gx = $("#generuoti-xml");
+  if (!pm || !gx) return;
+  if (!window._vadybininkas) { pm.style.display = "none"; gx.style.display = ""; return; }
+  gx.style.display = "none";
+  pm.style.display = B && B.id ? "" : "none";
+  const pasMane = B && B.etapas === "vadybininkas";
+  pm.textContent = pasMane ? "✅ Perduoti apskaitai" : "↩ Atsiimti iš apskaitos";
+  pm.classList.toggle("antras", !pasMane);
+}
+
+$("#perduoti-apskaitai").onclick = async () => {
+  if (!B || !B.id) return;
+  const atgal = B.etapas !== "vadybininkas";
+  if (!atgal && !confirm("Perduoti šią sąskaitą apskaitai?\nApskaitininkės matys eilutes tokias, kokios yra DABAR (su sujungimais ir pakeitimais)."))
+    return;
+  try {
+    const r = await fetch("/api/saskaita/perduoti", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: B.id, atgal }),
+    });
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
+    if (atgal) B.etapas = "vadybininkas"; else delete B.etapas;
+    const _e = (window._sarasas || []).find(x => x.id === B.id);
+    if (_e) _e.etapas = atgal ? "vadybininkas" : "";
+    $("#klaida-apacia").innerHTML = atgal ? ""
+      : `<span style="color:var(--zalia); font-weight:600">✓ Perduota apskaitai</span>`;
+    atnaujintiPerdavimoMygtuka();
+    uzkrautiApdorotas(); uzkrautiFolderius();
+  } catch (e) { alert("Nepavyko perduoti: " + e.message); }
+};
+
+$("#generuoti-xml").onclick = async () => {
+  $("#klaida-apacia").textContent = "";
+  if (B._svetima) {
+    $("#klaida-apacia").textContent = "Šią sąskaitą šiuo metu tvarko kolegė — XML čia užrakintas, kad darbas nesidubliuotų.";
+    return;
+  }
+  // Apsauga nuo DVIGUBO suvedimo: Pragmos busenu srautas sako, kad dokumentas jau ju DB
+  const _pr = (window._sarasas || []).find(x => x.id === B.id);
+  // Ispejimas tik kai keliama i TA PACIA baze, kurioje dokumentas jau yra
+  // (tikros bazės sąskaita, keliama į BANDYMAI — ten jos nėra, dublikato nebus)
+  const _db = (efektyviPragma() || {}).duombaze || "";
+  const _dokDb = _pr && _pr.pragmoje ? (_pr.pragmoje_db || "") : "";
+  let _kitojeBazeje = "";
+  if (_pr && _pr.pragmoje) {
+    if (!_db || _dokDb.toUpperCase() === _db.toUpperCase()) {
+      if (!confirm(`⚠ Ši sąskaita JAU YRA Pragmos bazėje ${_dokDb} (${pragmosBusena(_pr.pragmoje)}).\n` +
+        `Naujas XML gali sukurti DVIGUBĄ suvedimą.\n\nAr tikrai formuoti dar kartą?`)) return;
+    } else _kitojeBazeje = _dokDb;
+  }
+  const be = B.eilutes.filter(e => !e.pasirinkimas).length;
+  if (be > 0 && !confirm(`${be} eil. be parinktos kortelės — į XML eis tiekėjo kodas / EAN. Tęsti?`)) return;
+
+  const duomenys = {
+    saskaitos_id: B.id || "",
+    kas: localStorage.getItem("uzp_vardas") || "",
+    // <Pragma> sekcija: pasiulytos reiksmes + apskaitininkes pakeitimai
+    pragma: efektyviPragma(),
+    tiekejas: B.saskaita.tiekejas,
+    pirkejas: B.saskaita.pirkejas,
+    saskaitos_numeris: B.saskaita.saskaitos_numeris,
+    saskaitos_data: B.saskaita.saskaitos_data,
+    apmoketi_iki: B.saskaita.apmoketi_iki,
+    valiuta: B.saskaita.valiuta,
+    // Pardavimo antraste (pirkejas, tipas, data, pastaba…) — TOKIA, KOKIA
+    // EKRANE dabar (apskaitininkes pataisymai gali buti dar neissisaugoje)
+    pardavimo_antraste: B.saskaita.pardavimas || null,
+    eilutes: B.eilutes.map(e => ({
+      pavadinimas: e.pavadinimas,
+      ean: e.ean || "",
+      tiekejo_kodas: e.tiekejo_kodas || "",
+      pirkejo_kodas: e.pasirinkimas ? (e.pasirinkimas.kodas || "") : "",
+      pirkejo_pavadinimas: e.pasirinkimas ? (e.pasirinkimas.pavadinimas || "") : "",
+      nauja_kortele: !!(e.pasirinkimas && e.pasirinkimas.tipas === "nauja"),
+      kiekis: e.kiekis, vienetas: vienetasXml(e.vienetas),
+      vnt_kaina: e.vnt_kaina, suma: e.suma, pvm_proc: e.pvm_proc, pvm_suma: e.pvm_suma,
+      // vadybininko pardavimo suma — serveris is jos formuoja <Pardavimas> pora
+      pardavimo_be_pvm: e.pardavimo_be_pvm != null ? e.pardavimo_be_pvm : null,
+    })),
+  };
+  try {
+    const r = await fetch("/api/xml", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(duomenys) });
+    if (!r.ok) throw new Error(r.statusText);
+    // XML NEATSISIUNCIAMAS i kompiuteri — ji pasiima Pragmos serverio agentas is eiles.
+    // Prireikus (agentas neveikia) — nuoroda "atsisiųsti ranka" apacioje.
+    const blob = await r.blob();
+    const vardas = (B.saskaita.saskaitos_numeris || "saskaita").replaceAll("/", "-").replaceAll(" ", "_") + ".xml";
+    const nuoroda = URL.createObjectURL(blob);
+    const pragma = r.headers.get("X-Pragma-Eksportas");
+    const papildomai = pragma === "ok" ? " ir į Pragmos importo folderį"
+                     : pragma === "klaida" ? " (⚠ į Pragmos folderį nepavyko — patikrink kelią .env faile)" : "";
+    const pi = window._pragmaInfo;
+    // ATSKIRAS pardavimo XML (Document-Sale): serveris pasako, ar jis suformuotas,
+    // ar dar laukia kitu paketo saskaitu XML
+    const pardF = r.headers.get("X-Pardavimo-Failas"), pardL = r.headers.get("X-Pardavimas-Laukia");
+    const pardTekstas = pardF ? ` + pardavimas ${escapeHtml(pardF.replace(/\.xml$/i, ""))}`
+      : pardL ? ` (pardavimo XML bus suformuotas, kai XML turės visos paketo sąskaitos — dar laukia: ${escapeHtml(pardL)})` : "";
+    const autoTekstas = (pi && pi.auto
+      ? `✓ Išsiųsta į Pragmą${pardTekstas} — kelsis automatiškai${(efektyviPragma() || {}).duombaze && (efektyviPragma() || {}).duombaze.startsWith("BANDYMAI") ? " (BANDYMŲ bazė)" : ""}; rezultatas atsiras prie sąskaitos`
+      : `✓ Perduota Pragmos serveriui${papildomai}`)
+      + (_kitojeBazeje ? ` <span style="color:var(--pilkas); font-weight:400">(bazėje ${escapeHtml(_kitojeBazeje)} ši sąskaita jau yra — ten nesiųsta)</span>` : "");
+    $("#klaida-apacia").innerHTML =
+      `<span style="color:var(--zalia); font-weight:600">${autoTekstas}</span>
+       <a href="${nuoroda}" download="${vardas}" style="margin-left:12px; font-size:12px; color:var(--pilkas)">atsisiųsti ranka</a>`;
+    issaugotiDabar(); // galutine busena issaugoma karta su XML zyma
+    // Serveris po XML žymę nuėmė (darbas baigtas) — nustojam ją atnaujinti
+    clearInterval(_uzemimoLaikmatis); _uzemimoLaikmatis = null; _uzimtaId = null;
+    // Paketo juostoje prie šitos sąskaitos atsiranda ✓; senas Pragmos importo
+    // rezultatas (pvz. iš bandymų bazės) nebegalioja — laukiam naujo
+    B.xml_sugeneruota = true; delete B.pragmos_importas;
+    const _e = (window._sarasas || []).find(x => x.id === B.id);
+    if (_e) { _e.xml_sugeneruota = true; delete _e.pragmos_importas; }
+    pieštiPaketoJuosta();
+  } catch (e) {
+    $("#klaida-apacia").textContent = "XML nepavyko: " + e.message;
+  }
+};
+
+// ↩ VIENO MYGTUKO ATSTATYMAS: viskas grizta i pradini AI nuskaityma
+// (issaugota gili kopija irase) — be AI, nemokamai, akimirksniu
+$("#atstatyti-pradine").onclick = () => {
+  if (!B) return;
+  if (!B.originalas) {
+    // Sena saskaita (apdorota pries atnaujinima) — pradines kopijos nera;
+    // vienintelis kelias atgal — AI perleidimas (po jo kopija jau saugoma)
+    if (confirm("Ši sąskaita apdorota anksčiau — pradinė kopija neišsaugota.\nPerleisti AI iš naujo (~1 ct)? Po to atstatymas veiks nemokamai."))
+      $("#ai-is-naujo").onclick();
+    return;
+  }
+  if (!confirm("Atstatyti VISKĄ į pradinę būseną (kaip AI nuskaitė)?\nVisi redagavimai — sumos, sujungimai, išskaidymai, kortelių parinkimai — dings.")) return;
+  B.saskaita = JSON.parse(JSON.stringify(B.originalas.saskaita));
+  B.eilutes = JSON.parse(JSON.stringify(B.originalas.eilutes));
+  document.querySelectorAll("[data-l]").forEach(inp => {
+    const kelias = inp.dataset.l.split(".");
+    inp.value = kelias.length === 2 ? ((B.saskaita[kelias[0]] || {})[kelias[1]] ?? "") : (B.saskaita[kelias[0]] ?? "");
+  });
+  pieštiEilutes(); perskaiciuoti(); pazymetiKeitima();
+  issaugotiDabar();
+};
+
+$("#ai-is-naujo").onclick = async () => {
+  if (!B || !B.id) return;
+  if (!confirm("Perleisti AI ekstrakciją šitam failui iš naujo (~1 ct)? Esami redagavimai bus pakeisti šviežiu ištraukimu.")) return;
+  rodytiUzdanga(true);
+  try {
+    const r = await fetch("/api/saskaita/perleisti", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: B.id }),
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    rodyti(await r.json());
+  } catch (e) {
+    alert("Nepavyko: " + e.message);
+  } finally {
+    rodytiUzdanga(false);
+  }
+};
+
+$("#nauja-saskaita").onclick = () => location.reload();
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="lt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prisijungimas — Užpajamavimas</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/static/ikona-192.png">
+<meta name="theme-color" content="#2563eb">
+<style>
+  :root{--akcentas:#2563eb; --linija:#e5e7eb; --pilkas:#6b7280; --raudona:#dc2626}
+  *{box-sizing:border-box; margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:#f3f4f6; color:#111827;
+       min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px}
+  .kortele{background:#fff; border:1px solid var(--linija); border-radius:14px; padding:34px 30px;
+           width:100%; max-width:360px; box-shadow:0 10px 30px rgba(0,0,0,.06)}
+  .ikona{font-size:34px; text-align:center; margin-bottom:8px}
+  h1{font-size:18px; text-align:center; margin-bottom:2px}
+  h1 span{color:var(--akcentas)}
+  .sub{font-size:12.5px; color:var(--pilkas); text-align:center; margin-bottom:22px}
+  label{display:block; font-size:12px; color:var(--pilkas); margin:12px 0 4px}
+  input{width:100%; padding:10px 12px; border:1px solid var(--linija); border-radius:8px; font-size:14px}
+  input:focus{outline:2px solid var(--akcentas); outline-offset:-1px; border-color:transparent}
+  button{width:100%; margin-top:20px; padding:11px; border:0; border-radius:8px; background:var(--akcentas);
+         color:#fff; font-size:14px; font-weight:600; cursor:pointer}
+  button:hover{filter:brightness(1.06)}
+  button:disabled{opacity:.6; cursor:default}
+  #klaida{color:var(--raudona); font-size:12.5px; margin-top:12px; text-align:center; min-height:16px}
+</style>
+</head>
+<body>
+<form class="kortele" id="forma">
+  <div class="ikona">🧾</div>
+  <h1>Užpajamavimo <span>programa</span></h1>
+  <div class="sub">Prisijunk, kad tęstum</div>
+  <label for="vardas">Vardas</label>
+  <input id="vardas" autocomplete="username" placeholder="pvz. Petras" required maxlength="40">
+  <label for="slaptazodis">Slaptažodis</label>
+  <input id="slaptazodis" type="password" autocomplete="current-password" required>
+  <button id="mygtukas">Prisijungti</button>
+  <div id="klaida"></div>
+</form>
+<script>
+"use strict";
+document.getElementById("forma").addEventListener("submit", async e => {
+  e.preventDefault();
+  const m = document.getElementById("mygtukas"), k = document.getElementById("klaida");
+  m.disabled = true; k.textContent = "";
+  try {
+    const r = await fetch("/api/prisijungti", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vardas: document.getElementById("vardas").value.trim(),
+        slaptazodis: document.getElementById("slaptazodis").value,
+      }),
+    });
+    if (r.ok) {
+      // Zyme gyvena TIK sio lango gyvavimo laika: uzdarius programa ir
+      // atidarius is naujo jos nebera -> visada prasoma prisijungti is naujo
+      try { sessionStorage.setItem("uzp_gyva", "1"); } catch (_) {}
+      location.href = "/";
+      return;
+    }
+    k.textContent = (await r.json().catch(() => ({}))).detail || "Nepavyko prisijungti";
+  } catch { k.textContent = "Ryšio klaida — bandyk dar kartą"; }
+  m.disabled = false;
+});
+</script>
+</body>
+</html>
